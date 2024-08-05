@@ -1,6 +1,6 @@
 npm install -g memlab
 nvm use 16
-memlab run --scenario ./scenario.js --headful
+memlab run --scenario ./memlab/scenario.js --headful
 
 
 

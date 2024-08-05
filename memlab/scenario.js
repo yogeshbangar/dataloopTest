@@ -16,6 +16,7 @@ async function someAsyncFunction(page) {
     console.log('action~~~~~~~~~~');
     await firstFrame(page);
     await groupingListControls(page);
+    await onKeyframes(page);
     await play(page);
     await checkbox(page);
     console.log('action End~~~~~~~~~~');
@@ -64,6 +65,22 @@ async function groupingListControls(page) {
     await elements.click('[class="dl-btn column pendo-dlBtnicon-dl-groupingListControls justify-center "]');
     await sleep(10000);
     console.timeEnd('groupingListControls~~~~~~~~~~');
+}
+
+//  keyframe-bar-list-item q-item q-item-type row no-wrap q-item--dark q-item--clickable q-link cursor-pointer q-focusable q-hoverable
+
+async function onKeyframes(page) {
+    console.time('onKeyframes~~~~~~~~~~');
+    const elements = await page.$$('.text-dl-color-label-list-item');
+    let i = 0;
+    for (let element of elements) {
+        console.log(elements?.length, 'element~~~~~~~~~~', i);
+        await sleep(200);
+        await element.click();
+        i++;
+    }
+    await sleep(1000);
+    console.timeEnd('onKeyframes~~~~~~~~~~');
 }
 
 async function lastFrame(page) {
