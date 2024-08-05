@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Memory Leak</title>
+	<link rel="shortcut icon" href="https://threejs.org/files/favicon.ico">
+	<style>
+		#parent {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 2px;
+		}
+
+		.memory-leak {
+			width: 30px;
+			height: 30px;
+			background-color: red;
+			align-content: center;
+			text-align: center;
+			font-weight: 900;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="btn"></div>
+	<div id="parent" style="left:10px;top:5px;" />
+	<script type="module">
+		function createElement() {
+			for (let i = 1; i < 10000; i++) {
+				const element = document.createElement('div');
+				element.className = 'memory-leak';
+				element.innerHTML = '' + i;
+				parent.appendChild(element);
+				elementArray.push(element);
+			}
+		}
+		function deleteElement() {
+			elementArray.forEach(element => {
+				parent.removeChild(element);
+			});
+		}
+		function releaseMemory() {
+			elementArray = [];
+		}
+		function reassign() {
+			elementArray.forEach(element => {
+				parent.appendChild(element);
+			});
+		}
+		function init() {
+			const btn = document.getElementById('btn');
+			const element = document.createElement('button');
+			element.innerHTML = 'Create Element';
+			element.onclick = createElement;
+			btn.appendChild(element);
+
+			const delElement = document.createElement('button');
+			delElement.innerHTML = 'Delete Element';
+			delElement.onclick = deleteElement;
+			btn.appendChild(delElement);
+
+			const relElement = document.createElement('button');
+			relElement.innerHTML = 'Release Memory';
+			relElement.onclick = releaseMemory;
+			btn.appendChild(relElement);
+
+			const reassignElement = document.createElement('button');
+			reassignElement.innerHTML = 'Reassign Element ';
+			reassignElement.onclick = reassign;
+			btn.appendChild(reassignElement);
+		}
+		const parent = document.getElementById('parent');
+		let elementArray = [];
+		init()
+	</script>
+</body>
+
+</html>

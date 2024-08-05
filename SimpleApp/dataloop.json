@@ -1,0 +1,31 @@
+{
+    "components": {
+        "panels": [
+            {
+                "name": "item-viewer",
+                "supportedSlots": [
+                    {
+                        "type": "itemViewer",
+                        "configuration": {
+                            "layout": {
+                                "leftBar": true,
+                                "rightBar": true,
+                                "bottomBar": true
+                            }
+                        }
+                    }
+                ],
+                "conditions": {
+                    "resources": [
+                        {
+                            "entityType": "item",
+                            "filter": {
+                                "metadata.system.mimetype": "*/*"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
