@@ -1,4 +1,4 @@
-# dataloop Test
+# Dataloop Test
 
 ## Install and Run
 - npm install
