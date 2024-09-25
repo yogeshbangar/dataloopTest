@@ -1,6 +1,5 @@
 // Autor: Yogeosh Bangar
-
-
+let map, drawInteraction, snapInteraction,baseVector,drawVector;
 const scribbleStyle = (feature, resolution) => {
   const colors = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'purple', 'GreenYellow'];
   const a = feature.get('angle') || Math.random() * Math.PI;
@@ -38,19 +37,61 @@ const scribbleStyle = (feature, resolution) => {
   ];
 };
 
+const addInteraction = () => {
+  const value = 'Polygon';
+  if (value !== 'None') {
+    drawInteraction = new ol.interaction.Draw({
+      type: value,
+      source: drawVector.getSource(),
+      trace: true,
+      traceSource: baseVector.getSource(),
+      style: {
+        'stroke-color': 'rgba(255, 255, 100, 0.5)',
+        'stroke-width': 1.5,
+        'fill-color': 'rgba(255, 255, 100, 0.25)',
+        'circle-radius': 6,
+        'circle-fill-color': 'rgba(255, 255, 100, 0.5)',
+      },
+    });
+    map.addInteraction(drawInteraction);
+    map.addInteraction(snapInteraction);
+  }
+}
 
 const onLoad = () => {
   const layer = new ol.layer.Geoportail({ layer: 'ORTHOIMAGERY.ORTHOPHOTOS' });
-
+  baseVector = new ol.layer.Vector({
+    source: new ol.source.Vector({
+      format: new ol.format.GeoJSON(),
+      url: './fire.json',
+    }),
+    style: {
+      'fill-color': 'rgba(255, 0, 0, 0.3)',
+      'stroke-color': 'rgba(255, 0, 0, 0.9)',
+      'stroke-width': 0.5,
+    },
+  });
+  drawVector = new ol.layer.Vector({
+    source: new ol.source.Vector(),
+    style: {
+      'stroke-color': 'rgba(100, 255, 0, 1)',
+      'stroke-width': 2,
+      'fill-color': 'rgba(100, 255, 0, 0.3)',
+    },
+  });
+  snapInteraction = new ol.interaction.Snap({
+    source: baseVector.getSource(),
+  });
+  console.log(ol.interaction, '~~~~~~~');
   // The map
-  const map = new ol.Map({
+  map = new ol.Map({
     target: 'map',
     view: new ol.View
       ({
         zoom: 3,
         center: [166326, 5992663]
       }),
-    layers: [layer]
+    layers: [layer,baseVector,drawVector]
   });
   const vector = new ol.layer.Vector({
     renderMode: 'image',
@@ -61,6 +102,7 @@ const onLoad = () => {
     style: scribbleStyle
   })
   map.addLayer(vector);
+  addInteraction();
 }
 document.addEventListener("DOMContentLoaded", function (event) {
   console.log("DOM fully loaded and parsed");
