@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { getWorldCoords } from "./util.js";
+import { getWorldCoords } from "../util.js";
 export default class Polygon {
   pointer = new THREE.Vector2();
   startPos = new THREE.Vector3(0, 0.0, 0);

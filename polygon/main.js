@@ -5,7 +5,7 @@ import Polygon from "./polygon.js";
 import Brush from "./brush.js";
 const MODE_BRUSH = "MODE_BRUSH";
 const MODE_POLYGON = "MODE_POLYGON";
-const uvGridUrl = "./uv_grid_directx.jpg";
+const uvGridUrl = "../images/uv_grid_directx.jpg";
 let mode = MODE_BRUSH;
 
 const scene = new THREE.Scene();
