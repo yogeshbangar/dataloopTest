@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Multiline Text Editor</title>
+  <style>
+    canvas {
+      border: 1px solid #000;
+      display: block;
+      margin: 20px auto;
+      cursor: text;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="textEditor" width="500" height="300"></canvas>
+
+  <script>
+    const canvas = document.getElementById('textEditor');
+    const ctx = canvas.getContext('2d');
+
+    // Editor State
+    const state = {
+      text: 'Welcome to the Canvas Text Editor with multiline support!',
+      fontSize: 20,
+      fontFamily: 'Arial',
+      lineHeight: 30,
+      cursorPos: { line: 0, char: 0 },
+      selectionStart: null,
+      selectionEnd: null,
+      isSelecting: false,
+      lines: [],
+    };
+
+    // Initialize Canvas
+    ctx.font = `${state.fontSize}px ${state.fontFamily}`;
+    ctx.textBaseline = 'top';
+
+    // Break text into lines based on canvas width
+    function breakTextIntoLines() {
+      const words = state.text.split(' ');
+      const lines = [];
+      let currentLine = '';
+
+      words.forEach((word) => {
+        const testLine = currentLine ? currentLine + ' ' + word : word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > canvas.width) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+
+      if (currentLine) lines.push(currentLine);
+      state.lines = lines;
+    }
+
+    // Render the text editor
+    function render() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Break text into lines
+      breakTextIntoLines();
+
+      // Render lines and selection
+      state.lines.forEach((line, lineIndex) => {
+        const y = lineIndex * state.lineHeight;
+
+        // Render selection (if any)
+        if (state.selectionStart && state.selectionEnd) {
+          const startLine = Math.min(state.selectionStart.line, state.selectionEnd.line);
+          const endLine = Math.max(state.selectionStart.line, state.selectionEnd.line);
+
+          if (lineIndex >= startLine && lineIndex <= endLine) {
+            const lineText = line;
+            const startChar = lineIndex === startLine ? state.selectionStart.char : 0;
+            const endChar = lineIndex === endLine ? state.selectionEnd.char : lineText.length;
+
+            const xStart = ctx.measureText(lineText.slice(0, startChar)).width;
+            const xEnd = ctx.measureText(lineText.slice(0, endChar)).width;
+
+            ctx.fillStyle = 'rgba(173, 216, 230, 0.5)'; // Light blue
+            ctx.fillRect(xStart, y, xEnd - xStart, state.lineHeight);
+          }
+        }
+
+        // Render text
+        ctx.fillStyle = '#000';
+        ctx.fillText(line, 0, y);
+      });
+
+      // Render cursor
+      const currentLineText = state.lines[state.cursorPos.line] || '';
+      const cursorX = ctx.measureText(currentLineText.slice(0, state.cursorPos.char)).width;
+      const cursorY = state.cursorPos.line * state.lineHeight;
+      ctx.fillRect(cursorX, cursorY, 1, state.fontSize);
+    }
+
+    // Move cursor to a position
+    function moveCursor(line, char) {
+      state.cursorPos.line = Math.max(0, Math.min(state.lines.length - 1, line));
+      const maxChar = (state.lines[state.cursorPos.line] || '').length;
+      state.cursorPos.char = Math.max(0, Math.min(maxChar, char));
+      render();
+    }
+
+    // Handle mouse events for selection
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const lineIndex = Math.floor(y / state.lineHeight);
+      const lineText = state.lines[lineIndex] || '';
+      let charIndex = 0;
+
+      for (let i = 1; i <= lineText.length; i++) {
+        if (ctx.measureText(lineText.slice(0, i)).width > x) break;
+        charIndex = i;
+      }
+
+      state.cursorPos = { line: lineIndex, char: charIndex };
+      state.selectionStart = { line: lineIndex, char: charIndex };
+      state.selectionEnd = null;
+      state.isSelecting = true;
+
+      render();
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!state.isSelecting) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const lineIndex = Math.floor(y / state.lineHeight);
+      const lineText = state.lines[lineIndex] || '';
+      let charIndex = 0;
+
+      for (let i = 1; i <= lineText.length; i++) {
+        if (ctx.measureText(lineText.slice(0, i)).width > x) break;
+        charIndex = i;
+      }
+
+      state.selectionEnd = { line: lineIndex, char: charIndex };
+      render();
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      state.isSelecting = false;
+    });
+
+    // Handle keyboard events
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        moveCursor(state.cursorPos.line, state.cursorPos.char - 1);
+      } else if (e.key === 'ArrowRight') {
+        moveCursor(state.cursorPos.line, state.cursorPos.char + 1);
+      } else if (e.key === 'ArrowUp') {
+        moveCursor(state.cursorPos.line - 1, state.cursorPos.char);
+      } else if (e.key === 'ArrowDown') {
+        moveCursor(state.cursorPos.line + 1, state.cursorPos.char);
+      } else if (e.key.length === 1) {
+        const line = state.lines[state.cursorPos.line] || '';
+        const before = line.slice(0, state.cursorPos.char);
+        const after = line.slice(state.cursorPos.char);
+        state.lines[state.cursorPos.line] = before + e.key + after;
+        state.cursorPos.char++;
+        state.text = state.lines.join('\n');
+        render();
+      }
+    });
+
+    render(); // Initial render
+  </script>
+</body>
+</html>

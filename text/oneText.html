@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Selection Start and End</title>
+  </head>
+  <body>
+    <p id="text-id">
+      Select some text in this <span>paragraph</span> one <span> helll</span>to get the start and end positions.
+    </p>
+
+    <button onclick="getSelectionPosition()">Get Selection Position</button>
+
+    <p id="output"></p>
+    <p id="output1"></p>
+    <script>
+      function getNodeOffset(node) {
+        // If the node is a text node, we need to get the offset of its parent
+        if (node.nodeType === Node.TEXT_NODE) {
+          if (!node.parentNode) return 0;
+
+          // Get all text nodes that come before this one within the same parent
+          let offset = 0;
+          let currentNode = node.parentNode.firstChild;
+
+          while (currentNode && currentNode !== node) {
+            if (currentNode.nodeType === Node.TEXT_NODE) {
+              offset += currentNode.textContent.length;
+            } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
+              offset += getTextContentLength(currentNode);
+            }
+            currentNode = currentNode.nextSibling;
+          }
+
+          // Add the offset of the parent node
+          return getNodeOffset(node.parentNode) + offset;
+        }
+
+        // For element nodes, we need to calculate the offset up to this node
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (!node.parentNode) return 0;
+
+          let offset = 0;
+          let currentNode = node.parentNode.firstChild;
+
+          while (currentNode && currentNode !== node) {
+            if (currentNode.nodeType === Node.TEXT_NODE) {
+              offset += currentNode.textContent.length;
+            } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
+              offset += getTextContentLength(currentNode);
+            }
+            currentNode = currentNode.nextSibling;
+          }
+
+          return getNodeOffset(node.parentNode) + offset;
+        }
+
+        // For the root node or other node types
+        return 0;
+      }
+
+      // Helper function to get the text content length of a node
+      function getTextContentLength(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent.length;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          let length = 0;
+          for (const child of node.childNodes) {
+            length += getTextContentLength(child);
+          }
+          return length;
+        }
+
+        return 0;
+      }
+      function getSelectionPosition() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const startOffset = range.startOffset;
+          const endOffset = range.endOffset;
+
+          document.getElementById(
+            "output"
+          ).innerText = `Start: ${startOffset}, End: ${endOffset}`;
+        }
+
+        const range = selection.getRangeAt(0);
+        const startOffset =
+          getNodeOffset(range.startContainer) + range.startOffset;
+        const endOffset = getNodeOffset(range.endContainer) + range.endOffset;
+
+        document.getElementById(
+          "output1"
+        ).innerText = `Start: ${startOffset}, End: ${endOffset}`;
+      }
+    </script>
+  </body>
+</html>

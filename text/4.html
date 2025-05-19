@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flexible Height Child</title>
+  <style>
+    .parent {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overflow-y: hidden;
+      gap: 20px;
+      align-items: flex-start; /* ✅ important! */
+    }
+
+    .child {
+      flex: 0 0 auto;
+      width: 50vw;
+      background: red;
+      display: flex;
+      align-items: center; /* Center text inside child, horizontally */
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      box-sizing: border-box;
+      padding: 10px;
+      overflow-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+<div class="parent" onscroll="console.log('scrolling')">
+  <div class="child">Short Text A</div>
+  <div class="child">
+    Very Very Very Very Very Very Very Very Very Long Text B Very Very Very Very Very Very Very Very Very Long Text B Very Very Very Very Very Very Very Very Very Long Text B
+  </div>
+  <div class="child">C</div>
+  <div class="child">D</div>
+</div>
+
+</body>
+</html>

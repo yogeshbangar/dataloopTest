@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Window</title>
+</head>
+<body>
+
+    <div id="support-form-div">
+        <form id="support-form" action="https://dataloop.ai/salesforce-form/" method="post">
+            <input type="hidden" name="payload" value="payload">
+        </form>
+        <button
+            text-color="dl-color-darker"
+            flat
+            icon="icon-dl-support"
+            tooltip="Contact Support"
+            onclick="handleClick()"
+        >open Form 3</button>
+    </div>
+
+    <div id="httpbin-form-div">
+        <form id="httpbin-form" action="https://httpbin.org/post" method="post">
+            <input type="hidden" name="payload" value="payload">
+        </form>
+        <button
+            text-color="dl-color-darker"
+            flat
+            icon="icon-dl-httpbin"
+            tooltip="Contact Support"
+            onclick="httpbinForm()"
+        >httpbinForm Form 3</button>
+    </div>
+    
+    
+    <button onclick="addForm()">Add Form 3</button>
+
+    <script>
+        
+
+        function getSelectionOffsets() {
+            const form = document.getElementById('support-form') ;
+            form.submit();
+        }
+        function handleClick_1() {
+            const form = document.getElementById('support-form');
+            const url = form.action;
+            const payload = form.payload.value;
+
+            // Open a new window with the specified URL and payload
+            const newWindow = window.open(url, '_blank');
+            console.log(newWindow,'Payload sent to new window:~~~!!~', payload);
+            if (newWindow) {
+                newWindow.onload = function() {
+                    // Send the payload to the new window
+                    newWindow.postMessage(payload, url);
+                    console.log('Payload sent to new window:~~~~', payload);
+                };
+            } else {
+                alert('Please allow popups for this website');
+            }
+        }
+        function handleClick() {
+            const form = document.getElementById('support-form')
+            console.log('Payload sent to new window:~~~~', form);
+            form.target = '_blank'
+            form.submit()
+        }
+        function httpbinForm() {
+            const form = document.getElementById('httpbin-form')
+            console.log('Payload sent to new window:~~~~', form);
+            form.target = '_blank'
+            form.submit()
+        }
+
+        function addForm() {
+            const randomId = Math.random().toString(36).substring(2, 15)+"-form";
+            const node = document.createElement("form");
+            node.setAttribute("id", randomId);
+            node.setAttribute("action", "https://dataloop.ai/salesforce-form/");
+            node.setAttribute("method", "post");
+            node.setAttribute("target", "_blank");
+            node.setAttribute("style", "display:none;");
+            const input = document.createElement("input");
+            input.setAttribute("type", "hidden");
+            input.setAttribute("name", "payload");      
+            node.appendChild(input); 
+            document.body.appendChild(node); 
+            setTimeout(() => {
+                const form = document.getElementById(randomId);
+                console.log('Payload sent to new window:~~~~', form);
+                form.target = '_blank'
+                form.submit()
+            }, 1000)
+            //form.submit()
+        }
+    </script>
+
+</body>
+</html>

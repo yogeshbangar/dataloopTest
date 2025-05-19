@@ -103,8 +103,42 @@ const onLoad = () => {
   })
   map.addLayer(vector);
   addInteraction();
+  ol.proj.transform([
+    -120.96082917772775,
+    37.73080090608502
+], 'EPSG:4326', 'EPSG:3035');
+  console.log('~~~!!~~~> ',transformCoordinates(coordinates4326) )
 }
+const coordinates4326 = [
+  [
+      -120.96082917772775,
+      37.73080090608502
+  ],
+  [
+      -120.96134964508794,
+      37.73080090608502
+  ],
+  [
+      -120.96134964508794,
+      37.73120605535166
+  ],
+  [
+      -120.96082917772775,
+      37.73120605535166
+  ],
+  [
+      -120.96082917772775,
+      37.73080090608502
+  ]
+];
+
+// Function to transform coordinates from EPSG:4326 to EPSG:3035
+const transformCoordinates = (coords) => {
+  return coords.map(point => ol.proj.transform(point, 'EPSG:4326', 'EPSG:3035'));
+};
+
 document.addEventListener("DOMContentLoaded", function (event) {
   console.log("DOM fully loaded and parsed");
   onLoad();
 }); 
+

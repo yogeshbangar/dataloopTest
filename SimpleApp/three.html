@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/loaders/PCDLoader.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
+    <title>Three JS</title>
+    <style>
+      body {
+        margin: 0;
+        background: #424242;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      window.onload = () => {
+        init();
+      };
+      const init = () => {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        const controls = new THREE.OrbitControls( camera, renderer.domElement );
+        camera.position.z = 5;
+        const light = new THREE.AmbientLight( 0xffffff ); // soft white light
+        scene.add( light );
+
+        const urls = [
+          'Park3Med/px.jpg',
+          'Park3Med/nx.jpg',
+          'Park3Med/py.jpg',
+          'Park3Med/ny.jpg',
+          'Park3Med/pz.jpg',
+          'Park3Med/nz.jpg'
+        ]
+        const textureCube = new THREE.CubeTextureLoader().load( urls,(e)=>{
+          console.log('loaded',e);
+        },(e)=>{
+          console.log('progress',e);
+        },(e)=>{
+          console.log('error',e);
+        });
+        scene.background = textureCube;
+
+        const loader = new THREE.PCDLoader();
+        let pointsObj;
+        // Load the PCD file
+        loader.load(
+            "_71.pcd",
+            function (points) {
+            // Add the points to the scene
+                scene.add(points);
+                // Render the scene
+                renderer.render(scene, camera);
+                points.rotation.set( -Math.PI / 2,0, 0);
+                points.position.x = 55;
+                points.position.z = 55;
+                pointsObj = points;
+                
+                points.material.needsUpdate = true;
+            },
+            function (xhr) {
+            // Called while loading is progressing
+            // console.log((xhr.loaded / xhr.total ) * 100 + "% loaded");
+            },
+            function (error) {
+            // Called if there's an error loading the file
+            console.error("Error loading PCD file:", error);
+            }
+        );
+
+        function animate() {
+            requestAnimationFrame(animate);
+        //   cube.rotation.x += 0.01;
+        //   cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('keydown', (event) => {
+        console.log('Key pressed:', pointsObj.position);
+
+        // Example: move camera
+        switch (event.key) {
+            case 'w': // Move forward (up)
+            pointsObj.position.y += 1;
+            break;
+            case 's': // Move backward (down)
+            pointsObj.position.y -= 1;
+            break;
+            case 'a': // Move left
+            pointsObj.position.x -= 1;
+            break;
+            case 'd': // Move right
+            pointsObj.position.x += 1;
+            break;
+            case 'ArrowUp':
+            pointsObj.position.z -= 1;
+            break;
+            case 'ArrowDown':
+            pointsObj.position.z += 1;
+            break;
+        }
+        });
+        };
+    </script>
+  </body>
+</html>

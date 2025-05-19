@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounding Box Tile Restriction and Masking</title>
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+    <!-- OpenLayers CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        const view = new ol.View({
+            center: ol.proj.fromLonLat([0, 0]),
+            zoom: 2,
+        });
+
+        // Define the bounding box in EPSG:3857 (map projection)
+        const boundingBox = ol.proj.transformExtent(
+            [-10, 35, 10, 45], // Bounding box in lon/lat (minLon, minLat, maxLon, maxLat)
+            'EPSG:4326',
+            'EPSG:3857'
+        );
+
+        // Initialize the map with an OSM layer with restricted loading
+        const map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM({
+                        tileLoadFunction: function(imageTile, src) {
+                            // Get tile extent
+                            const tileExtent = imageTile.getTileCoord();
+                            const tileCenter = ol.extent.getCenter(
+                                ol.tilegrid.createXYZ().getTileCoordExtent(tileExtent)
+                            );
+
+                            // Check if tile center is inside the bounding box
+                            if (ol.extent.containsCoordinate(boundingBox, tileCenter)) {
+                                imageTile.getImage().src = src; // Load tile if inside bounding box
+                            } else {
+                                imageTile.getImage().src = ""; // Skip tile if outside bounding box
+                            }
+                        }
+                    })
+                }),
+            ],
+            view: view,
+        });
+
+        // Define world extent for mask
+        const worldExtent = [
+            [-20026376.39, -20048966.10], // Bottom-left
+            [-20026376.39, 20048966.10],  // Top-left
+            [20026376.39, 20048966.10],   // Top-right
+            [20026376.39, -20048966.10],  // Bottom-right
+            [-20026376.39, -20048966.10]  // Closing point
+        ];
+
+        // Convert bounding box coordinates to EPSG:3857 for masking
+        const boxCoordinates = [
+            [boundingBox[0], boundingBox[1]], // Bottom-left
+            [boundingBox[0], boundingBox[3]], // Top-left
+            [boundingBox[2], boundingBox[3]], // Top-right
+            [boundingBox[2], boundingBox[1]], // Bottom-right
+            [boundingBox[0], boundingBox[1]]  // Closing point
+        ];
+
+        // Create the mask geometry (world extent with hole for bounding box)
+        const maskGeometry = new ol.geom.Polygon([worldExtent, boxCoordinates]);
+
+        // Create a mask feature with black fill
+        const maskFeature = new ol.Feature({
+            geometry: maskGeometry,
+        });
+
+        const maskLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [maskFeature]
+            }),
+            style: new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 0, 1.7)', // Semi-transparent black
+                })
+            })
+        });
+
+        // Add mask layer to the map
+        map.addLayer(maskLayer);
+        function createMaskGeometry() {
+            return new ol.geom.Polygon([worldExtent, boxCoordinates]);
+        }
+        view.on('change:resolution', () => {
+            maskFeature.setGeometry(createMaskGeometry());  // Update the mask geometry
+        });
+
+        // Optional: Restrict view so that it cannot zoom too far out to prevent black area from dominating
+        view.setMinZoom(2);
+    </script>
+</body>
+</html>

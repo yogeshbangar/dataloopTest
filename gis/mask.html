@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Handling in OpenLayers</title>
+    <style>
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+    <!-- OpenLayers CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        // Initialize the map view
+        const view = new ol.View({
+            center: ol.proj.fromLonLat([0, 0]),
+            zoom: 2,
+        });
+
+        // Initialize the map
+        const map = new ol.Map({
+            target: 'map',
+            layers: [
+                new ol.layer.Tile({
+                    source: new ol.source.OSM(),
+                }),
+            ],
+            view: view,
+        });
+
+        // Define the size of the box in degrees (adjusts with zoom)
+        let boxSize = 5; 
+
+        // Define a large polygon that covers the entire map view for masking
+        const worldExtent = [
+            [-20026376.39, -20048966.10],
+            [-20026376.39, 20048966.10],
+            [20026376.39, 20048966.10],
+            [20026376.39, -20048966.10],
+            [-20026376.39, -20048966.10]
+        ];
+
+        // Function to create mask geometry with updated center and box size
+        function createMaskGeometry(center, size) {
+            const boxCoords = [
+                ol.proj.fromLonLat([center[0] - size, center[1] - size]),
+                ol.proj.fromLonLat([center[0] - size, center[1] + size]),
+                ol.proj.fromLonLat([center[0] + size, center[1] + size]),
+                ol.proj.fromLonLat([center[0] + size, center[1] - size]),
+                ol.proj.fromLonLat([center[0] - size, center[1] - size])
+            ];
+            return new ol.geom.Polygon([worldExtent, boxCoords]);
+        }
+
+        // Create a mask feature
+        const maskFeature = new ol.Feature({
+            geometry: createMaskGeometry(ol.proj.toLonLat(view.getCenter()), boxSize),
+        });
+
+        // Create a vector source and layer for the mask
+        const maskSource = new ol.source.Vector({
+            features: [maskFeature],
+        });
+
+        const maskLayer = new ol.layer.Vector({
+            source: maskSource,
+            style: new ol.style.Style({
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 0, 1.6)',
+                }),
+            }),
+        });
+
+        // Add the mask layer to the map
+        map.addLayer(maskLayer);
+
+        // Update the mask size based on zoom level
+        function updateBoxSizeBasedOnZoom() {
+            const currentZoom = view.getZoom();
+            boxSize = Math.max(1, 5 / currentZoom);  // Adjust box size according to zoom
+            const center = ol.proj.toLonLat(view.getCenter());
+            maskFeature.setGeometry(createMaskGeometry(center, boxSize));
+        }
+
+        // Update mask geometry continuously on pan
+        map.on('pointerdrag', () => {
+            // const center = ol.proj.toLonLat(view.getCenter());
+            // maskFeature.setGeometry(createMaskGeometry(center, boxSize));
+        });
+
+        // Update mask geometry on zoom level change
+        view.on('change:resolution', () => {
+            requestAnimationFrame(updateBoxSizeBasedOnZoom);  // Use requestAnimationFrame for smooth updates
+        });
+    </script>
+</body>
+</html>

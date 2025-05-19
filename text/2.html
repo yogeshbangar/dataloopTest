@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Selection Start & End</title>
+</head>
+<body>
+
+    <p id="text-id">
+        Select some text in this <span>paragraph</span> one <span>helll</span> to get the start and end positions.
+    </p>
+
+    <button onclick="getSelectionOffsets()">Get Selection Position</button>
+
+    <p id="output"></p>
+
+    <script>
+        function getTextNodes(node) {
+            let textNodes = [];
+            let walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+            while (walker.nextNode()) {
+                textNodes.push(walker.currentNode);
+            }
+            return textNodes;
+        }
+
+        function getSelectionOffsets() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            const startNode = range.startContainer;
+            const endNode = range.endContainer;
+            const startOffset = range.startOffset;
+            const endOffset = range.endOffset;
+
+            // Collect all text nodes inside the parent container
+            let parent = document.getElementById("text-id");
+            let textNodes = getTextNodes(parent);
+
+            // Calculate the absolute positions
+            let charCount = 0, startPos = -1, endPos = -1;
+            for (let node of textNodes) {
+                if (node === startNode) startPos = charCount + startOffset;
+                if (node === endNode) endPos = charCount + endOffset;
+                charCount += node.nodeValue.length;
+                if (startPos !== -1 && endPos !== -1) break;
+            }
+
+            document.getElementById("output").innerText =
+                `Start Position: ${startPos}, End Position: ${endPos}`;
+        }
+    </script>
+
+</body>
+</html>
