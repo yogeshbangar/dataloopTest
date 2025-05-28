@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Three.js Camera Calibration with Distortion</title>
+  <style>body { margin: 0; overflow: hidden; }</style>
+  <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.146.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src='shader.js'></script>
+  <script src='fish.js'></script>
+</head>
+<body>
+  <script>
+     window.onload = (event) => {
+        console.log("~~~~~~~~~~~~ page is fully loaded ~~~~~~~~~~~~~~");
+        fetch('frame.json')
+          .then(response => response.json())
+          .then(data => {
+            new FishEye(data);
+          })
+          .catch(error => console.error('Error loading fish data:', error));
+      };
+  </script>
+</body>
+</html>

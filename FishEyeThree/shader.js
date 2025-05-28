@@ -1,0 +1,46 @@
+const DistortionShader = (obj) => { return {
+    uniforms: {
+      tDiffuse: { value: null },
+      k1: { value: obj.k1 },
+      k2: { value: obj.k2 },
+      k3: { value: obj.k3 },
+      p1: { value: obj.p1 },
+      p2: { value: obj.p2 },
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+    fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float k1, k2, k3, p1, p2;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 uv = vUv * 2.0 - 1.0;
+          float x = uv.x;
+          float y = uv.y;
+          float r2 = x*x + y*y;
+          float r4 = r2 * r2;
+          float r6 = r4 * r2;
+
+          float radial = 1.0 + k1 * r2 + k2 * r4 + k3 * r6;
+
+          // Tangential distortion
+          float dx = 2.0 * p1 * x * y + p2 * (r2 + 2.0 * x * x);
+          float dy = p1 * (r2 + 2.0 * y * y) + 2.0 * p2 * x * y;
+
+          vec2 distorted = vec2(x * radial + dx, y * radial + dy);
+          distorted = (distorted + 1.0) / 2.0;
+
+          if (distorted.x < 0.0 || distorted.x > 1.0 || distorted.y < 0.0 || distorted.y > 1.0) {
+            gl_FragColor = vec4(0.0);
+          } else {
+            gl_FragColor = texture2D(tDiffuse, distorted);
+          }
+        }
+      `,
+  }};
