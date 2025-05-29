@@ -9,6 +9,7 @@
   <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/EffectComposer.js"></script>
   <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/RenderPass.js"></script>
   <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://unpkg.com/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
   <script src='shader.js'></script>
   <script src='fish.js'></script>
   <style>
@@ -21,18 +22,11 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 1500px;
-      height: 1200px;
+      width: 2848px;
+      height: 2848px;
       z-index: -1;
     }
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 1500px;
-      height: 1200px;
-      
-    }
+   
     #fishText {
       position: absolute;
       top: 0;
@@ -46,7 +40,7 @@
   </style>
 </head>
 <body>
-  <img id="fish" src="img.jpg" alt="Fish Image" />
+  <img id="fish" src="img0.jpg" alt="Fish Image" />
   <div id="fishText">Hello</div>
   <script>
      window.onload = (event) => {
