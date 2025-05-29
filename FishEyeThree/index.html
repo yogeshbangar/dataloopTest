@@ -11,8 +11,43 @@
   <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/ShaderPass.js"></script>
   <script src='shader.js'></script>
   <script src='fish.js'></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #333;
+    }
+    #fish {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1500px;
+      height: 1200px;
+      z-index: -1;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1500px;
+      height: 1200px;
+      
+    }
+    #fishText {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: white;
+      font-size: 48px;
+      text-align: center;
+      z-index: 100;
+       -webkit-text-stroke: 2px black;
+    }
+  </style>
 </head>
 <body>
+  <img id="fish" src="img.jpg" alt="Fish Image" />
+  <div id="fishText">Hello</div>
   <script>
      window.onload = (event) => {
         console.log("~~~~~~~~~~~~ page is fully loaded ~~~~~~~~~~~~~~");

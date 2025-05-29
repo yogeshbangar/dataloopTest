@@ -1,6 +1,29 @@
 const width = window.innerWidth;
 const height = window.innerHeight;
 const aspect = width / height;
+const coordinates = {
+  direction: {
+    x: -0.22887238544706023,
+    y: -0.9734564351730242,
+    z: 0,
+  },
+  interpolation: "Linear",
+  position: {
+    x: 32.7659481040472,
+    y: 8.114036812901583,
+    z: 1.493252,
+  },
+  rotation: {
+    x: 0,
+    y: 0,
+    z: -1.8017154900187053,
+  },
+  scale: {
+    x: 6.276564,
+    y: 2.498287471244047,
+    z: 2.178916,
+  },
+};
 
 class FishEye {
   data;
@@ -29,9 +52,9 @@ class FishEye {
       new THREE.MeshNormalMaterial()
     );
     this.scene.add(this.cube);
-    const scale = 1.5; // Scale factor for the cube
-    this.cube.scale.set(scale, scale, scale);
-    this.cube.position.set(-8, -6, 6);
+    this.cube.scale.set(coordinates.scale.x, coordinates.scale.y, coordinates.scale.z);
+    this.cube.position.set(coordinates.position.x, coordinates.position.y, coordinates.position.z);
+    this.cube.rotation.set(coordinates.rotation.x, coordinates.rotation.y, coordinates.rotation.z);
     document.addEventListener("keyup", this.keyHandler.bind(this));
     document.addEventListener("keydown", this.keyHandler.bind(this));
   }
@@ -41,10 +64,7 @@ class FishEye {
     const rotation = camValue?.sensorsData?.extrinsic?.rotation;
     const intrinsicData = camValue?.sensorsData?.intrinsicData || {};
     const distortion = intrinsicData.distortion;
-    console.log(
-      this.cameraNo,"FishEye initialized with data:",
-      camValue,distortion
-    );
+    console.log("Camera No:", this.cameraNo, "\nPosition:", position, "\nRotation:", rotation, "\nIntrinsic Data:", intrinsicData, "\nDistortion:", distortion);
     this.camera.position.set(position.x, position.y, position.z);
     this.camera.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     const fy = intrinsicData?.fy || 75;
