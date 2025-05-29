@@ -81,14 +81,16 @@ class FishEye {
   data;
   constructor(data) {
     this.fishText = document.getElementById("fishText");
+    this.fishImg = document.getElementById("fishImg");
     this.data = data;
-    this.cameraNo = 1;
+    this.cameraNo = 0;
     this.frameNo = 0;
     this.init();
     this.animate();
   }
   init() {
     this.scene = new THREE.Scene();
+    // this.scene.background = new THREE.Color( '#ff0000' );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(width, height);
     document.body.appendChild(this.renderer.domElement);
@@ -154,6 +156,10 @@ class FishEye {
     // this.distortionPass.uniforms.k3.value = distortion.k3 || 0;
     // this.distortionPass.uniforms.p1.value = distortion.p1 || 0;
     // this.distortionPass.uniforms.p2.value = distortion.p2 || 0;
+    if(this.fishImg){
+        this.fishImg.src = `img${this.cameraNo}.jpg`;
+    }
+    
     console.log(
       "Camera Projection Matrix:",
       this.camera
