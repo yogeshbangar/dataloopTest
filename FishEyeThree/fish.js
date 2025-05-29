@@ -1,5 +1,5 @@
-const width = window.innerWidth;
-const height = window.innerHeight;
+const width = 1500; //window.innerWidth;
+const height = 1200; //window.innerHeight;
 const aspect = width / height;
 const coordinates = {
   direction: {
@@ -28,6 +28,7 @@ const coordinates = {
 class FishEye {
   data;
   constructor(data) {
+    this.fishText = document.getElementById("fishText");
     this.data = data;
     this.cameraNo = 0;
     this.init();
@@ -52,9 +53,21 @@ class FishEye {
       new THREE.MeshNormalMaterial()
     );
     this.scene.add(this.cube);
-    this.cube.scale.set(coordinates.scale.x, coordinates.scale.y, coordinates.scale.z);
-    this.cube.position.set(coordinates.position.x, coordinates.position.y, coordinates.position.z);
-    this.cube.rotation.set(coordinates.rotation.x, coordinates.rotation.y, coordinates.rotation.z);
+    this.cube.scale.set(
+      coordinates.scale.x,
+      coordinates.scale.y,
+      coordinates.scale.z
+    );
+    this.cube.position.set(
+      coordinates.position.x,
+      coordinates.position.y,
+      coordinates.position.z
+    );
+    this.cube.rotation.set(
+      coordinates.rotation.x,
+      coordinates.rotation.y,
+      coordinates.rotation.z
+    );
     document.addEventListener("keyup", this.keyHandler.bind(this));
     document.addEventListener("keydown", this.keyHandler.bind(this));
   }
@@ -64,7 +77,21 @@ class FishEye {
     const rotation = camValue?.sensorsData?.extrinsic?.rotation;
     const intrinsicData = camValue?.sensorsData?.intrinsicData || {};
     const distortion = intrinsicData.distortion;
-    console.log("Camera No:", this.cameraNo, "\nPosition:", position, "\nRotation:", rotation, "\nIntrinsic Data:", intrinsicData, "\nDistortion:", distortion);
+    if (this.fishText)
+      this.fishText.innerHTML = `NO:${this.cameraNo}_${camValue?.name}`;
+
+    console.log(
+      "Camera No:",
+      this.cameraNo,
+      "\nPosition:",
+      position,
+      "\nRotation:",
+      rotation,
+      "\nIntrinsic Data:",
+      intrinsicData,
+      "\nDistortion:",
+      distortion
+    );
     this.camera.position.set(position.x, position.y, position.z);
     this.camera.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     const fy = intrinsicData?.fy || 75;
