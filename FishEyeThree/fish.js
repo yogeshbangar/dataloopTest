@@ -146,6 +146,13 @@ class FishEye {
       "\nDistortion:",
       distortion
     );
+    const width = widthArr[this.cameraNo % IMGS];
+    const height = heightArr[this.cameraNo % IMGS];
+    const fov = 2 * Math.atan(height / (2 * intrinsicData.fy)) * (180 / Math.PI); // vertical FOV in degrees
+    const camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 1000);
+    camera.position.set(position.x, position.y, position.z);
+    camera.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    this.camera = camera;
     configureCamera(this.camera, intrinsicData, widthArr[this.cameraNo%IMGS], heightArr[this.cameraNo%IMGS]);
     orientCamera(this.camera, this.cameraNo, this.data.frames[this.frameNo]);
     // this.adjustProjectionMatrix(intrinsicData);
