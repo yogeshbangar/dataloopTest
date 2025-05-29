@@ -1,6 +1,6 @@
-const width = 2848; //window.innerWidth;
-const height = 2848; //window.innerHeight;
-const aspect = width / height;
+const widthArr = [2848,1920]; //window.innerWidth;
+const heightArr = [2848,1536]; //window.innerHeight;
+const IMGS = 2
 
 function configureCamera(camera, intrinsicData, width, height) {
   const fov = 2 * Math.atan((0.5 * height) / intrinsicData.fy);
@@ -83,7 +83,7 @@ class FishEye {
     this.fishText = document.getElementById("fishText");
     this.fishImg = document.getElementById("fishImg");
     this.data = data;
-    this.cameraNo = 0;
+    this.cameraNo = 1;
     this.frameNo = 0;
     this.init();
     this.animate();
@@ -92,9 +92,9 @@ class FishEye {
     this.scene = new THREE.Scene();
     // this.scene.background = new THREE.Color( '#ff0000' );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    this.renderer.setSize(width, height);
+    this.renderer.setSize(widthArr[this.cameraNo%IMGS], heightArr[this.cameraNo%IMGS]);
     document.body.appendChild(this.renderer.domElement);
-    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     // this.composer = new THREE.EffectComposer(this.renderer);
     // this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
     // const controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
@@ -133,9 +133,7 @@ class FishEye {
     const rotation = camValue?.sensorsData?.extrinsic?.rotation;
     const intrinsicData = camValue?.sensorsData?.intrinsicData || {};
     const distortion = intrinsicData.distortion;
-    if (this.fishText)
-      this.fishText.innerHTML = `NO:${this.cameraNo}_${camValue?.name}_id:${camValue?.id}`;
-
+    
     console.log(
       "Camera No:",
       this.cameraNo,
@@ -148,7 +146,7 @@ class FishEye {
       "\nDistortion:",
       distortion
     );
-    configureCamera(this.camera, intrinsicData, width, height);
+    configureCamera(this.camera, intrinsicData, widthArr[this.cameraNo%IMGS], heightArr[this.cameraNo%IMGS]);
     orientCamera(this.camera, this.cameraNo, this.data.frames[this.frameNo]);
     // this.adjustProjectionMatrix(intrinsicData);
     // this.distortionPass.uniforms.k1.value = distortion.k1 || 0;
@@ -157,9 +155,17 @@ class FishEye {
     // this.distortionPass.uniforms.p1.value = distortion.p1 || 0;
     // this.distortionPass.uniforms.p2.value = distortion.p2 || 0;
     if(this.fishImg){
-        this.fishImg.src = `img${this.cameraNo}.jpg`;
+        const w = widthArr[this.cameraNo%IMGS];
+        const h = heightArr[this.cameraNo%IMGS];
+        this.fishImg.src = `img${this.cameraNo%IMGS}.jpg`;
+        this.fishImg.style.width = `${w}px`;
+        this.fishImg.style.height = `${h}px`;
+        this.renderer.setSize(w, h);
+        // composer.setSize(w, h);
     }
-    
+    if (this.fishText)
+      this.fishText.innerHTML = `NO:${this.cameraNo}_${camValue?.name}`;
+
     console.log(
       "Camera Projection Matrix:",
       this.camera
