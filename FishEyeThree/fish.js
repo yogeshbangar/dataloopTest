@@ -9,10 +9,8 @@ function configureCamera(
     height
 ) {
     const fov = 2 * Math.atan((0.5 * height) / intrinsicData.fy)
-
     camera.aspect = width / height
     camera.fov = (fov * 180) / Math.PI
-
     camera.setViewOffset(
         width,
         height,
@@ -23,20 +21,23 @@ function configureCamera(
     )
 
     camera.updateProjectionMatrix()
-
     camera.scale.x = intrinsicData.fy / intrinsicData.fx
 }
 
 function orientCamera(
     camera,
-    extrinsic
+    index,
+    frame
 ) {
-    
+    const extrinsic = frame?.images?.[index]?.sensorsData?.extrinsic
+    console.log('orientCamera', frame?.images?.[index]);
     if (
         camera &&
-        extrinsic?.rotation
-        
+        extrinsic?.rotation &&
+        frame?.rotation &&
+        extrinsic?.translation
     ) {
+        console.log('extrinsic~~~',extrinsic);
         const imageQ = new THREE.Quaternion(
             extrinsic.rotation.x,
             extrinsic.rotation.y,
@@ -44,20 +45,20 @@ function orientCamera(
             extrinsic.rotation.w
         ).normalize()
         const frameQ = new THREE.Quaternion(
-            0,
-            0,
-            0,
-            1
+            frame.rotation.x,
+            frame.rotation.y,
+            frame.rotation.z,
+            frame.rotation.w
         ).normalize()
         const mulQ = frameQ.multiply(imageQ)
         camera.quaternion.copy(mulQ.multiply(new THREE.Quaternion(1, 0, 0, 0)))
         camera.position
             .set(
-                extrinsic.position.x,
-                extrinsic.position.y,
-                extrinsic.position.z
+                extrinsic.translation.x - frame.translation.x,
+                extrinsic.translation.y - frame.translation.y,
+                extrinsic.translation.z - frame.translation.z
             )
-            .applyQuaternion({x: 0, y: 0, z: 0, w: 1})
+            .applyQuaternion(frame.rotation)
     }
 }
 
@@ -91,6 +92,7 @@ class FishEye {
     this.fishText = document.getElementById("fishText");
     this.data = data;
     this.cameraNo = 1;
+    this.frameNo = 0;
     this.init();
     this.animate();
   }
@@ -138,7 +140,7 @@ class FishEye {
     const intrinsicData = camValue?.sensorsData?.intrinsicData || {};
     const distortion = intrinsicData.distortion;
     if (this.fishText)
-      this.fishText.innerHTML = `NO:${this.cameraNo}_${camValue?.name}`;
+      this.fishText.innerHTML = `NO:${this.cameraNo}_${camValue?.name}_id:${camValue?.id}`;
 
     console.log(
       "Camera No:",
@@ -158,7 +160,7 @@ class FishEye {
       width,
       height
     );
-    orientCamera(this.camera, camValue?.sensorsData?.extrinsic);
+    orientCamera(this.camera,this.cameraNo, this.data.frames[this.frameNo]);
     this.adjustProjectionMatrix(intrinsicData);
     this.distortionPass.uniforms.k1.value = distortion.k1 || 0;
     this.distortionPass.uniforms.k2.value = distortion.k2 || 0;
