@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Three.js Camera Calibration Example</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+      #fishImg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 2848px;
+        height: 2848px;
+        z-index: -1;
+      }
+
+      #fishText {
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: white;
+        font-size: 48px;
+        text-align: center;
+        z-index: 100;
+        background-color: #3338;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Include Three.js and necessary postprocessing scripts -->
+    <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <img id="fishImg" src="img0.jpg" alt="Fish Image" />
+    <script>
+      let cube;
+      const widthArr = [2848,1920]; //window.innerWidth;
+      const heightArr = [2848,1536]; //window.innerHeight;
+
+      const coordinates = {
+        direction: {
+          x: -0.22887238544706023,
+          y: -0.9734564351730242,
+          z: 0,
+        },
+        interpolation: "Linear",
+        position: {
+          x: -32.7659481040472,
+          y: 8.114036812901583,
+          z: 1.493252,
+        },
+        rotation: {
+          x: 0,
+          y: 0,
+          z: -1.8017154900187053,
+        },
+        scale: {
+          x: 6.276564,
+          y: 2.498287471244047,
+          z: 2.178916,
+        },
+      };
+      // === Camera Calibration Data ===
+      const calibrationData = {
+        position: {
+          x: 4.661051354560144,
+          y: 0.02041731557264506,
+          z: 0.5801922319892809,
+        },
+        rotation: {
+          x: 0.6034351620765924,
+          y: -0.5961227684431638,
+          z: 0.3703545844744641,
+          w: -0.37860418892558706,
+        },
+        intrinsicData: {
+          fx: 555.724474032,
+          fy: 555.978,
+          cx: 961.968,
+          cy: 555.978,
+          skew: 0.0,
+          distortion: {
+            k1: -0.0841882,
+            k2: -0.0339981,
+            k3: 0.0859536,
+            p1: 3.12291e-5,
+            p2: 0.000144906,
+          },
+        },
+        imageWidth: 1920,
+        imageHeight: 1536,
+        imageSrc: "img1.jpg",
+      };
+
+      let scene, camera, renderer, composer;
+        window.onload = (event) => {
+        console.log("~~~~~~~~~~~~ page is fully loaded ~~~~~~~~~~~~~~");
+        fetch('frames.json')
+          .then(response => response.json())
+          .then(data => {
+            const no = 0;
+            calibrationData.position = data.cameras[no].sensorsData.extrinsic.position;
+            calibrationData.rotation = data.cameras[no].sensorsData.extrinsic.rotation;
+            calibrationData.intrinsicData = data.cameras[no].sensorsData.intrinsicData;
+            calibrationData.imageWidth= widthArr[no%2];
+            calibrationData.imageHeight= heightArr[no%2];
+            calibrationData.imageSrc = `img${no}.jpg`;
+            console.log(calibrationData,"Fish data loaded:", data);
+             init();
+             animate();
+          })
+          .catch(error => console.error('Error loading fish data:', error));
+      };
+
+
+      function init() {
+        // === Initialize Scene and Renderer ===
+        scene = new THREE.Scene();
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(
+          calibrationData.imageWidth,
+          calibrationData.imageHeight
+        );
+        document.body.appendChild(renderer.domElement);
+
+        // === Set Background Image ===
+        const loader = new THREE.TextureLoader();
+        loader.load(calibrationData.imageSrc, function (texture) {
+        //   scene.background = texture;
+        });
+
+        // === Configure Camera ===
+        const { fx, fy, cx, cy, distortion } = calibrationData.intrinsicData;
+        const { imageWidth: width, imageHeight: height } = calibrationData;
+
+        // Calculate vertical field of view in degrees
+        const fov = 2 * Math.atan(height / (2 * fy)) * (180 / Math.PI);
+        const aspect = width / height;
+
+        camera = new THREE.PerspectiveCamera(fov, aspect, 0.1, 1000);
+
+        // Set camera position and orientation
+        const { x, y, z } = calibrationData.position;
+        const { x: rx, y: ry, z: rz, w: rw } = calibrationData.rotation;
+        camera.position.set(x, y, z);
+        camera.quaternion.set(rx, ry, rz, rw);
+        camera.updateProjectionMatrix();
+
+        // === Add 3D Object ===
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshNormalMaterial();
+        cube = new THREE.Mesh(geometry, material);
+        cube.scale.set(
+          coordinates.scale.x,
+          coordinates.scale.y,
+          coordinates.scale.z
+        );
+        cube.position.set(
+          coordinates.position.x,
+          coordinates.position.y,
+          coordinates.position.z
+        );
+        cube.rotation.set(
+          coordinates.rotation.x,
+          coordinates.rotation.y,
+          coordinates.rotation.z
+        );
+        scene.add(cube);
+
+        // === Postprocessing for Lens Distortion Correction ===
+        composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        const distortionShader = {
+          uniforms: {
+            tDiffuse: { value: null },
+            k1: { value: distortion.k1 },
+            k2: { value: distortion.k2 },
+            k3: { value: distortion.k3 },
+            p1: { value: distortion.p1 },
+            p2: { value: distortion.p2 },
+            fx: { value: fx },
+            fy: { value: fy },
+            cx: { value: cx },
+            cy: { value: cy },
+            width: { value: width },
+            height: { value: height },
+          },
+          vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+          fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform float k1, k2, k3, p1, p2;
+          uniform float fx, fy, cx, cy;
+          uniform float width, height;
+          varying vec2 vUv;
+
+          void main() {
+            // Convert normalized coordinates to pixel coordinates
+            float x = vUv.x * width;
+            float y = vUv.y * height;
+
+            // Normalize coordinates with respect to the principal point and focal length
+            float xNorm = (x - cx) / fx;
+            float yNorm = (y - cy) / fy;
+
+            float r2 = xNorm * xNorm + yNorm * yNorm;
+            float r4 = r2 * r2;
+            float r6 = r4 * r2;
+
+            float radial = 1.0 + k1 * r2 + k2 * r4 + k3 * r6;
+
+            float xDistorted = xNorm * radial + 2.0 * p1 * xNorm * yNorm + p2 * (r2 + 2.0 * xNorm * xNorm);
+            float yDistorted = yNorm * radial + p1 * (r2 + 2.0 * yNorm * yNorm) + 2.0 * p2 * xNorm * yNorm;
+
+            // Convert back to pixel coordinates
+            float u = fx * xDistorted + cx;
+            float v = fy * yDistorted + cy;
+
+            // Normalize back to [0,1]
+            vec2 distortedUv = vec2(u / width, v / height);
+
+            if (distortedUv.x < 0.0 || distortedUv.x > 1.0 || distortedUv.y < 0.0 || distortedUv.y > 1.0) {
+              gl_FragColor = vec4(0.0);
+            } else {
+              gl_FragColor = texture2D(tDiffuse, distortedUv);
+            }
+          }
+        `,
+        };
+
+        const distortionPass = new THREE.ShaderPass(distortionShader);
+        composer.addPass(distortionPass);
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        composer.render();
+      }
+      document.addEventListener("keyup", (event) => {
+        inc = 1;
+        switch (event.key) {
+          case "ArrowUp":
+            cube.position.z += inc;
+            break;
+          case "ArrowDown":
+            cube.position.z -= inc;
+            break;
+          case "ArrowLeft":
+            cube.position.x -= inc;
+            break;
+          case "ArrowRight":
+            cube.position.x += inc;
+            break;
+          case "a":
+            cube.position.y += inc;
+            break;
+          case "z":
+            cube.position.y -= inc;
+            break;
+
+          case "w":
+            cube.position.set(0, 0, 0);
+            break;
+        }
+        console.log(cube.position, "Key keyup~~!~", event.key);
+      });
+    </script>
+  </body>
+</html>
