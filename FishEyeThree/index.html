@@ -51,7 +51,7 @@
   <script>
      window.onload = (event) => {
         console.log("~~~~~~~~~~~~ page is fully loaded ~~~~~~~~~~~~~~");
-        fetch('frame.json')
+        fetch('frames.json')
           .then(response => response.json())
           .then(data => {
             new FishEye(data);

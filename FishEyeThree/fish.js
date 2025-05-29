@@ -1,6 +1,66 @@
 const width = 1500; //window.innerWidth;
 const height = 1200; //window.innerHeight;
 const aspect = width / height;
+
+function configureCamera(
+    camera,
+    intrinsicData,
+    width,
+    height
+) {
+    const fov = 2 * Math.atan((0.5 * height) / intrinsicData.fy)
+
+    camera.aspect = width / height
+    camera.fov = (fov * 180) / Math.PI
+
+    camera.setViewOffset(
+        width,
+        height,
+        0.5 * width - intrinsicData.cx,
+        0.5 * height - intrinsicData.cy,
+        width,
+        height
+    )
+
+    camera.updateProjectionMatrix()
+
+    camera.scale.x = intrinsicData.fy / intrinsicData.fx
+}
+
+function orientCamera(
+    camera,
+    extrinsic
+) {
+    
+    if (
+        camera &&
+        extrinsic?.rotation
+        
+    ) {
+        const imageQ = new THREE.Quaternion(
+            extrinsic.rotation.x,
+            extrinsic.rotation.y,
+            extrinsic.rotation.z,
+            extrinsic.rotation.w
+        ).normalize()
+        const frameQ = new THREE.Quaternion(
+            0,
+            0,
+            0,
+            1
+        ).normalize()
+        const mulQ = frameQ.multiply(imageQ)
+        camera.quaternion.copy(mulQ.multiply(new THREE.Quaternion(1, 0, 0, 0)))
+        camera.position
+            .set(
+                extrinsic.position.x,
+                extrinsic.position.y,
+                extrinsic.position.z
+            )
+            .applyQuaternion({x: 0, y: 0, z: 0, w: 1})
+    }
+}
+
 const coordinates = {
   direction: {
     x: -0.22887238544706023,
@@ -30,7 +90,7 @@ class FishEye {
   constructor(data) {
     this.fishText = document.getElementById("fishText");
     this.data = data;
-    this.cameraNo = 0;
+    this.cameraNo = 1;
     this.init();
     this.animate();
   }
@@ -92,12 +152,13 @@ class FishEye {
       "\nDistortion:",
       distortion
     );
-    this.camera.position.set(position.x, position.y, position.z);
-    this.camera.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
-    const fy = intrinsicData?.fy || 75;
-    const fovY = 2 * Math.atan(height / (2 * fy)) * (180 / Math.PI);
-    this.camera.fov = fovY;
-    this.camera.updateProjectionMatrix();
+    configureCamera(
+      this.camera,
+      intrinsicData,
+      width,
+      height
+    );
+    orientCamera(this.camera, camValue?.sensorsData?.extrinsic);
     this.adjustProjectionMatrix(intrinsicData);
     this.distortionPass.uniforms.k1.value = distortion.k1 || 0;
     this.distortionPass.uniforms.k2.value = distortion.k2 || 0;
@@ -117,8 +178,8 @@ class FishEye {
   }
   animate() {
     requestAnimationFrame(this.animate.bind(this));
-    this.cube.rotation.y += 0.01;
-    this.cube.rotation.z += 0.01;
+    // this.cube.rotation.y += 0.01;
+    // this.cube.rotation.z += 0.01;
     this.composer.render();
   }
   keyHandler(event) {
