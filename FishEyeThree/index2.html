@@ -56,6 +56,10 @@
         const material = new THREE.MeshNormalMaterial();
         cube = new THREE.Mesh(geometry, material);
         scene.add(cube);
+         const loader = new THREE.TextureLoader();
+        loader.load(`img0.jpg`, (texture)=>{
+          scene.background = texture;
+        });
 
         // Lighting
         const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -102,11 +106,11 @@
         const RadialDistortionShader = {
           uniforms: {
             tDiffuse: { value: null },
-            k1: { value: 466.35917211 },
-            k2: { value: 32.48178784 },
-            k3: { value: -52.1509689 },
-            k4: { value: 73.79780387 },
-            k5: { value: -30.12830986 },
+            k1: { value: 0.35917211 },
+            k2: { value: 0.48178784 },
+            k3: { value: -0.1509689 },
+            k4: { value: 0.79780387 },
+            k5: { value: -0.12830986 },
             k6: { value: -0.37231277 },
           },
           vertexShader: `
