@@ -127,7 +127,6 @@ class FishEye {
   }
   init() {
     this.scene = new THREE.Scene();
-    // this.scene.background = new THREE.Color( '#ff0000' );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(
       widthArr[this.cameraNo % IMGS],
@@ -137,47 +136,9 @@ class FishEye {
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     this.composer = new THREE.EffectComposer(this.renderer);
     this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
-    // const controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.distortionPass = new THREE.ShaderPass(CameraDistortionShader);
     this.composer.addPass(this.distortionPass);
-    document.addEventListener("keyup", this.keyHandler.bind(this));
-    document.addEventListener("keydown", this.keyHandler.bind(this));
-
-    this.k1Slider = document.getElementById("k1-slider");
-    this.k2Slider = document.getElementById("k2-slider");
-    this.k3Slider = document.getElementById("k3-slider");
-    this.p1Slider = document.getElementById("p1-slider");
-    this.p2Slider = document.getElementById("p2-slider");
-    
-
-    this.k1Value = document.getElementById("k1-value");
-    this.k2Value = document.getElementById("k2-value");
-    this.k3Value = document.getElementById("k3-value");
-    this.p1Value = document.getElementById("p1-value");
-    this.p2Value = document.getElementById("p2-value");
-    this.k1Slider.addEventListener("input", (e) => {
-      this.distortionPass.uniforms.k1.value = parseFloat(e.target.value);
-      this.k1Value.innerHTML = e.target.value;
-    });
-
-    this.k2Slider.addEventListener("input", (e) => {
-      this.distortionPass.uniforms.k2.value = parseFloat(e.target.value);
-      this.k2Value.innerHTML = e.target.value;
-    });
-
-    this.k3Slider.addEventListener("input", (e) => {
-      this.distortionPass.uniforms.k3.value = parseFloat(e.target.value);
-      this.k3Value.innerHTML = e.target.value;
-    });
-    this.p1Slider.addEventListener("input", (e) => {
-      this.distortionPass.uniforms.p1.value = parseFloat(e.target.value);
-      this.p1Value.innerHTML = e.target.value;
-    });
-
-    this.p2Slider.addEventListener("input", (e) => {
-      this.distortionPass.uniforms.p2.value = parseFloat(e.target.value);
-      this.p2Value.innerHTML = e.target.value;
-    });
+    this.eventInit()
     this.setCameraProjection();
     for (let i = 0; i < coordinates.length; i++) {
       const coord = coordinates[i];
@@ -191,8 +152,6 @@ class FishEye {
       this.scene.add(cube);
       this.cube = cube;
     }
-
-    
   }
   setCameraProjection() {
     const camValue = this.data.cameras[this.cameraNo];
@@ -201,18 +160,6 @@ class FishEye {
     const intrinsicData = camValue?.sensorsData?.intrinsicData || {};
     const distortion = intrinsicData.distortion;
     this.distortion = distortion;
-    console.log(
-      "Camera No:",
-      camValue,
-      "\nPosition:",
-      position,
-      "\nRotation:",
-      rotation,
-      "\nIntrinsic Data:",
-      intrinsicData,
-      "\nDistortion:",
-      distortion
-    );
     const width = widthArr[this.cameraNo % IMGS];
     const height = heightArr[this.cameraNo % IMGS];
     const fov =
@@ -241,9 +188,11 @@ class FishEye {
     }
     if (this.fishText)
       this.fishText.innerHTML = `
-        Intrinsic: ${JSON.stringify(intrinsicData,null,2)}<br>
-        ${"pos: "+JSON.stringify(position,null,2)+' No: '+camValue.id}<br>
-        Rot: ${JSON.stringify(rotation,null,2)}<br>`;
+        Intrinsic: ${JSON.stringify(intrinsicData, null, 2)}<br>
+        ${
+          "pos: " + JSON.stringify(position, null, 2) + " No: " + camValue.id
+        }<br>
+        Rot: ${JSON.stringify(rotation, null, 2)}<br>`;
 
     console.log("Camera Projection Matrix:", this.camera);
   }
@@ -287,6 +236,43 @@ class FishEye {
     // this.cube.rotation.z += 0.01;
     // this.renderer.render(this.scene, this.camera);
     this.composer.render();
+  }
+  eventInit() {
+    document.addEventListener("keyup", this.keyHandler.bind(this));
+    document.addEventListener("keydown", this.keyHandler.bind(this));
+    this.k1Slider = document.getElementById("k1-slider");
+    this.k2Slider = document.getElementById("k2-slider");
+    this.k3Slider = document.getElementById("k3-slider");
+    this.p1Slider = document.getElementById("p1-slider");
+    this.p2Slider = document.getElementById("p2-slider");
+    this.k1Value = document.getElementById("k1-value");
+    this.k2Value = document.getElementById("k2-value");
+    this.k3Value = document.getElementById("k3-value");
+    this.p1Value = document.getElementById("p1-value");
+    this.p2Value = document.getElementById("p2-value");
+    this.k1Slider.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.k1.value = parseFloat(e.target.value);
+      this.k1Value.innerHTML = e.target.value;
+    });
+
+    this.k2Slider.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.k2.value = parseFloat(e.target.value);
+      this.k2Value.innerHTML = e.target.value;
+    });
+
+    this.k3Slider.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.k3.value = parseFloat(e.target.value);
+      this.k3Value.innerHTML = e.target.value;
+    });
+    this.p1Slider.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.p1.value = parseFloat(e.target.value);
+      this.p1Value.innerHTML = e.target.value;
+    });
+
+    this.p2Slider.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.p2.value = parseFloat(e.target.value);
+      this.p2Value.innerHTML = e.target.value;
+    });
   }
   keyHandler(event) {
     const cube = this.cube;

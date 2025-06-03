@@ -130,7 +130,6 @@
     <div id="fishText">Hello</div>
     <script>
       window.onload = (event) => {
-        console.log("~~~~~~~~~~~~ page is fully loaded ~~~~~~~~~~~~~~");
         fetch("frames.json")
           .then((response) => response.json())
           .then((data) => {
@@ -140,7 +139,6 @@
       };
     </script>
     <div id="info-panel" class="panel-container">
-      
         <div id="distortion-controls" style="display: unset">
           <div style="margin: 10px 0">
             <label style="display: block; margin-bottom: 5px"
@@ -185,7 +183,6 @@
             />
           </div>
         </div>
-
         <div id="skew-controls" style="display: unset">
           <div style="margin: 10px 0">
             <label style="display: block; margin-bottom: 5px">p1: <span id="p1-value">0.0</span></label>
