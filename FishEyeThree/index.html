@@ -33,7 +33,7 @@
         top: 0px;
         left: 0px;
         color: white;
-        font-size: 18px;
+        font-size: 28px;
         text-align: center;
         z-index: 100;
         background-color: #3338;
@@ -70,7 +70,11 @@
         font-size: 14px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
       }
-
+      .check-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
       #distortion-controls > div {
         width: 50vw;
       }
@@ -81,7 +85,7 @@
     <div id="fishText">Hello</div>
     <script>
       window.onload = (event) => {
-        fetch("frames.json")
+        fetch("frames_fisheye.json")
           .then((response) => response.json())
           .then((data) => {
             new FishEye(data);
@@ -92,9 +96,20 @@
     <div id="info-panel" class="panel-container">
       <div id="distortion-controls" style="display: unset">
         <div style="margin: 10px 0">
-          <label style="display: block; margin-bottom: 5px"
-            >k1: <span id="k1-value">0.007</span></label
-          >
+          <div class="check-toggle">
+            <label style="display: block; margin-bottom: 5px">
+              k1: <span id="k1-value">0.007</span>
+            </label>
+            <div>
+              <label for="distortion-toggle">Toggle Distortion</label>
+              <input
+                type="checkbox"
+                id="distortion-toggle"
+                style="margin-left: 10px"
+              />
+            </div>
+          </div>
+
           <input
             type="range"
             id="k1-slider"

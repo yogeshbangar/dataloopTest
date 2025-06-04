@@ -1,30 +1,52 @@
-const widthArr = [2848, 1920]; //window.innerWidth;
-const heightArr = [2848, 1536]; //window.innerHeight;
-const IMGS = 2;
-
-function configureCamera(camera, intrinsicData, width, height) {
-  console.log("configureCamera", intrinsicData, width, height);
-
-  const fov_fov = 2 * Math.atan(height / (2 * intrinsicData.fy));
-
-  const fov = 2 * Math.atan((0.5 * height) / intrinsicData.fy);
-  console.log("fov", fov, fov_fov);
+const widthArr =  [2848, 1920, 1920, 1920]; //window.innerWidth;
+const heightArr = [2848, 1536, 1536, 1536]; //window.innerHeight;
+const IMGS = widthArr.length;
+function configureCamera0(camera, intrinsicData, width, height) {
+  const { fx, fy, cx, cy, skew } = intrinsicData;
+  const fov = 2 * Math.atan((0.5 * height) / fy);
   camera.aspect = width / height;
   camera.fov = (fov * 180) / Math.PI;
-  const skewFactor = intrinsicData.skew / intrinsicData.fx;
   camera.setViewOffset(
     width,
     height,
-    0.5 * width - intrinsicData.cx + skewFactor,
-    0.5 * height - intrinsicData.cy,
+    0.5 * width - cx,
+    0.5 * height - cy,
     width,
     height
   );
 
-  camera.scale.x = intrinsicData.fy / intrinsicData.fx;
+  camera.scale.x = fy / fx;
   camera.updateProjectionMatrix();
 }
+function configureCamera(camera, intrinsicData, width, height) {
+  const { fx, fy, cx, cy, skew } = intrinsicData;
 
+  // 1️⃣ Compute FOV and aspect
+  const fov = 2 * Math.atan((0.5 * height) / fy);
+  camera.aspect = width / height;
+  camera.fov = (fov * 180) / Math.PI;
+
+  // 2️⃣ Set view offset (principal point)
+  camera.setViewOffset(
+    width,
+    height,
+    0.5 * width - cx,
+    0.5 * height - cy,
+    width,
+    height
+  );
+
+  // 3️⃣ Scale X for fx/fy mismatch
+  camera.scale.x = fy / fx;
+
+  // 4️⃣ Update projection matrix
+  camera.updateProjectionMatrix();
+
+  // 5️⃣ Apply skew (modify projectionMatrix[4])
+  // OpenCV skew maps to element (1,0) or [4] in Three.js's column-major matrix
+  const skewFactor = skew / fx; // Normalize by focal length
+  camera.projectionMatrix.elements[4] = skewFactor;
+}
 function orientCamera(camera, index, frame) {
   const extrinsic = frame?.images?.[index]?.sensorsData?.extrinsic;
   console.log("orientCamera", frame);
@@ -112,6 +134,52 @@ const coordinates = [
       z: 9.4374372026182,
     },
   },
+  {
+    direction: {
+      x: -0.9572052641759686,
+      y: -0.2894098862060762,
+      z: 0,
+    },
+    interpolation: "Linear",
+    position: {
+      x: -27.366169,
+      y: 5.867037,
+      z: -0.127086,
+    },
+    rotation: {
+      x: 0,
+      y: 0,
+      z: -0.2673898942514081,
+    },
+    scale: {
+      x: 4.501174,
+      y: 1.95,
+      z: 1.62291,
+    },
+  },
+  {
+    position: {
+      x: 5.808877198539894,
+      y: 25.055109490845656,
+      z: 1.8414529330131728,
+    },
+    scale: {
+      x: 6.470243086782148,
+      y: 6.708694563901662,
+      z: 4.682905866026346,
+    },
+    rotation: {
+      x: 0,
+      y: 0,
+      z: 2.990434566611472,
+    },
+    interpolation: "Linear",
+    direction: {
+      x: -0.9885973525667148,
+      y: 0.15058311491692117,
+      z: 0,
+    },
+  },
 ];
 
 class FishEye {
@@ -136,9 +204,11 @@ class FishEye {
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     this.composer = new THREE.EffectComposer(this.renderer);
     this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
-    this.distortionPass = new THREE.ShaderPass(CameraDistortionShader);
+    this.distortionPass = new THREE.ShaderPass(
+      distortionShaderFishEyeCamera({})
+    );
     this.composer.addPass(this.distortionPass);
-    this.eventInit()
+    this.eventInit();
     this.setCameraProjection();
     for (let i = 0; i < coordinates.length; i++) {
       const coord = coordinates[i];
@@ -207,25 +277,75 @@ class FishEye {
     // proj.elements[8] =-offsetX + skewFactor;
     // proj.elements[9] =-offsetY;
     // this.camera.projectionMatrix.copy(proj);
+    const m = -150;
+    const _distortion = {
+      ...distortion,
+      k1: distortion.k1 * m,
+      k2: distortion.k2 * m,
+      k3: distortion.k3 * m,
+      k4: distortion.k4 * m,
+      k5: distortion.k5 * m,
+      k6: distortion.k6 * m,
+      k7: distortion.k7 * m,
+      k8: distortion.k8 * m,
+      k9: distortion.k9 * m,
+      p1: distortion.p1 * m,
+      p2: distortion.p2 * m,
+    };
+    const val = {
+      k1: -0.0841882,
+      k2: -0.0339981,
+      k3: 0.0859536,
+      k4: -0.0583792,
+      k5: 0.0191657,
+      k6: -0.00309023,
+      k7: 0.000196057,
+      k8: 0,
+      k9: 0,
+      p1: -0.000131398,
+      p2: -0.0000279048,
+      p3: 0,
+      p4: 0,
+      p5: 0,
+      p6: 0,
+      p7: 0,
+      p8: 0,
+      p9: 0,
+      r0: 2.2,
+    };
+    this.distortionPass.uniforms.k1.value = _distortion.k1 || 0;
+    this.distortionPass.uniforms.k2.value = _distortion.k2 || 0;
+    this.distortionPass.uniforms.k3.value = _distortion.k3 || 0;
+    this.distortionPass.uniforms.k4.value = _distortion.k4 || 0;
+    this.distortionPass.uniforms.k5.value = _distortion.k5 || 0;
+    this.distortionPass.uniforms.k6.value = _distortion.k6 || 0;
+    this.distortionPass.uniforms.k7.value = _distortion.k7 || 0;
+    this.distortionPass.uniforms.k8.value = _distortion.k9 || 0;
+    this.distortionPass.uniforms.k9.value = _distortion.k9 || 0;
+    this.distortionPass.uniforms.r0.value = _distortion.r0 || 1;
+    this.distortionPass.uniforms.p1.value = _distortion.p1 || 0;
+    this.distortionPass.uniforms.p2.value = _distortion.p2 || 0;
+    // this.distortionPass.uniforms.p3.value = _distortion.p3 || 0;
+    // this.distortionPass.uniforms.p4.value = _distortion.p4 || 0;
+    // this.distortionPass.uniforms.p5.value = _distortion.p5 || 0;
+    // this.distortionPass.uniforms.p6.value = _distortion.p6 || 0;
+    // this.distortionPass.uniforms.p7.value = _distortion.p7 || 0;
+    // this.distortionPass.uniforms.p8.value = _distortion.p8 || 0;
+    // this.distortionPass.uniforms.p9.value = _distortion.p9 || 0;
 
-    this.distortionPass.uniforms.k1.value = distortion.k1 || 0;
-    this.distortionPass.uniforms.k2.value = distortion.k2 || 0;
-    this.distortionPass.uniforms.k3.value = distortion.k3 || 0;
-    this.distortionPass.uniforms.p1.value = distortion.p1 || 0;
-    this.distortionPass.uniforms.p2.value = distortion.p2 || 0;
-    this.k1Slider.value = this.k1Value.innerHTML = distortion.k1;
-    this.k2Slider.value = this.k2Value.innerHTML = distortion.k2;
-    this.k3Slider.value = this.k3Value.innerHTML = distortion.k3;
-    this.p1Slider.value = this.p1Value.innerHTML = distortion.p1;
-    this.p2Slider.value = this.p2Value.innerHTML = distortion.p2;
+    this.k1Slider.value = this.k1Value.innerHTML = _distortion.k1;
+    this.k2Slider.value = this.k2Value.innerHTML = _distortion.k2;
+    this.k3Slider.value = this.k3Value.innerHTML = _distortion.k3;
+    this.p1Slider.value = this.p1Value.innerHTML = _distortion.p1;
+    this.p2Slider.value = this.p2Value.innerHTML = _distortion.p2;
     // this.distortionPass.uniforms.cx.value = cx;
     // this.distortionPass.uniforms.cy.value = cy;
     // this.distortionPass.uniforms.fx.value = fx;
     // this.distortionPass.uniforms.fy.value = fy || 0;
 
-    this.distortionPass.uniforms.inverse.value = true;
+    // this.distortionPass.uniforms.inverse.value = false;
     console.log(
-      distortion,
+      _distortion,
       `adjustProjectionMatrix~~`,
       this.distortionPass.uniforms
     );
@@ -250,6 +370,16 @@ class FishEye {
     this.k3Value = document.getElementById("k3-value");
     this.p1Value = document.getElementById("p1-value");
     this.p2Value = document.getElementById("p2-value");
+    this.distortionToggle = document.getElementById("distortion-toggle");
+    this.distortionToggle.addEventListener("input", (e) => {
+      this.distortionPass.uniforms.inverse.value = e.target.checked;
+      console.log(
+        e,
+        e.target.checked,
+        "Distortion toggle:",
+        this.distortionPass.uniforms
+      );
+    });
     this.k1Slider.addEventListener("input", (e) => {
       this.distortionPass.uniforms.k1.value = parseFloat(e.target.value);
       this.k1Value.innerHTML = e.target.value;
@@ -335,7 +465,22 @@ class FishEye {
           this.distortionPass.uniforms.k1.value -= 1;
           console.log(
             "Distortion reset to:~~~~~",
-            this.distortionPass.uniforms.k1.value
+            this.distortionPass.uniforms
+          );
+        case "5":
+          this.distortionPass.uniforms.r0.value -= 0.1;
+          console.log(
+            this.distortionPass.uniforms.r0.value,
+            "Distortion reset to:~~~~~",
+            this.distortionPass.uniforms
+          );
+          break;
+        case "6":
+          this.distortionPass.uniforms.r0.value += 0.1;
+          console.log(
+            this.distortionPass.uniforms.r0.value,
+            "Distortion reset to:~~~~~",
+            this.distortionPass.uniforms
           );
           break;
       }
