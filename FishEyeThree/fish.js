@@ -1,4 +1,4 @@
-const widthArr =  [2848, 1920, 1920, 1920]; //window.innerWidth;
+const widthArr = [2848, 1920, 1920, 1920]; //window.innerWidth;
 const heightArr = [2848, 1536, 1536, 1536]; //window.innerHeight;
 const IMGS = widthArr.length;
 function configureCamera0(camera, intrinsicData, width, height) {
@@ -204,9 +204,7 @@ class FishEye {
     this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     this.composer = new THREE.EffectComposer(this.renderer);
     this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
-    this.distortionPass = new THREE.ShaderPass(
-      distortionShaderFishEyeCamera({})
-    );
+    this.distortionPass = new THREE.ShaderPass(yogFisheyeDistortionShader);
     this.composer.addPass(this.distortionPass);
     this.eventInit();
     this.setCameraProjection();
@@ -277,7 +275,22 @@ class FishEye {
     // proj.elements[8] =-offsetX + skewFactor;
     // proj.elements[9] =-offsetY;
     // this.camera.projectionMatrix.copy(proj);
-    const m = -150;
+    let m = -(width / cx); // Adjust for focal length
+    m = -Math.sqrt((width * height) / (fx * fy) + (width * height) / (cx * cy)); // Adjust for focal length
+    console.log(
+      distortion,
+      "@~~Yog",
+      { m: m.toFixed(2) },
+
+      { cx },
+      { cy },
+      { skew },
+      { fx },
+      { fy },
+      { width },
+      { height }
+    );
+    m = 1;
     const _distortion = {
       ...distortion,
       k1: distortion.k1 * m,
@@ -289,29 +302,8 @@ class FishEye {
       k7: distortion.k7 * m,
       k8: distortion.k8 * m,
       k9: distortion.k9 * m,
-      p1: distortion.p1 * m,
-      p2: distortion.p2 * m,
-    };
-    const val = {
-      k1: -0.0841882,
-      k2: -0.0339981,
-      k3: 0.0859536,
-      k4: -0.0583792,
-      k5: 0.0191657,
-      k6: -0.00309023,
-      k7: 0.000196057,
-      k8: 0,
-      k9: 0,
-      p1: -0.000131398,
-      p2: -0.0000279048,
-      p3: 0,
-      p4: 0,
-      p5: 0,
-      p6: 0,
-      p7: 0,
-      p8: 0,
-      p9: 0,
-      r0: 2.2,
+      p1: distortion.p1 * 1,
+      p2: distortion.p2 * 1,
     };
     this.distortionPass.uniforms.k1.value = _distortion.k1 || 0;
     this.distortionPass.uniforms.k2.value = _distortion.k2 || 0;
@@ -346,7 +338,7 @@ class FishEye {
     // this.distortionPass.uniforms.inverse.value = false;
     console.log(
       _distortion,
-      `adjustProjectionMatrix~~`,
+      `adjustProjectionMatrix!!~~`,
       this.distortionPass.uniforms
     );
   }

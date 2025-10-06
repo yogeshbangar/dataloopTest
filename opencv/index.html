@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Video Open CV</title>
+    <script
+      async
+      src="https://docs.opencv.org/4.x/opencv.js"
+      type="text/javascript"
+    ></script>
+  </head>
+  <body>
+    <h1>Welcome to the HTML Page</h1>
+    <video id="video" src="video.mp4" controls></video>
+    <canvas id="canvas"></canvas>
+    <script>
+      let video = document.getElementById("video");
+      let canvas = document.getElementById("canvas");
+      let ctx = canvas.getContext("2d");
+
+      // Desired frame number
+      let frameNo = 100;
+
+      // When the video metadata is loaded (so we know the FPS)
+      video.addEventListener("loadedmetadata", () => {
+        let fps = 30; // If you know the FPS (otherwise calculate from duration/frames)
+        let time = frameNo / fps; // Convert frame number to time in seconds
+
+        // Seek to that time
+        video.currentTime = time;
+      });
+
+      // When the video seeks to the correct time
+      video.addEventListener("seeked", () => {
+        // Draw the frame to the canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to OpenCV Mat
+        let src = cv.imread(canvas);
+        console.log("Extracted frame as Mat:", src);
+
+        // Optionally save or display the frame
+        // You can also process the frame using OpenCV.js functions
+      });
+    </script>
+  </body>
+</html>
