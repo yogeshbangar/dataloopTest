@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Frame Accurate Seeking with OpenCV.js (Precached)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+      background: #0f1116;
+      color: #fff;
+    }
+    video, canvas {
+      display: block;
+      margin: 10px auto;
+      background: #1e1e1e;
+      border-radius: 6px;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 5px;
+      border-radius: 4px;
+      background: #282c34;
+      color: #fff;
+      border: 1px solid #444;
+      cursor: pointer;
+    }
+    input[type="number"] {
+      padding: 6px;
+      border-radius: 4px;
+      width: 80px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Frame Accurate Navigation with OpenCV.js</h2>
+  <input type="file" id="fileInput" accept="video/*" />
+  <canvas id="canvas" width="640" height="360"></canvas>
+
+  <div>
+    <button id="prevBtn">◀ Prev</button>
+    <input type="number" id="frameInput" value="0" min="0" />
+    <button id="nextBtn">Next ▶</button>
+  </div>
+
+  <script src="https://docs.opencv.org/4.x/opencv.js" async></script>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const frameInput = document.getElementById('frameInput');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+
+    let video;
+    let frameCache = [];
+    let fps = 30;
+    let currentFrame = 0;
+
+    const waitForOpenCV = (cb) => {
+      const check = () => {
+        if (window.cv && cv.Mat) cb();
+        else setTimeout(check, 100);
+      };
+      check();
+    };
+
+    const extractFrames = async (videoBlob) => {
+      return new Promise((resolve) => {
+        video = document.createElement('video');
+        video.src = URL.createObjectURL(videoBlob);
+        video.crossOrigin = 'anonymous';
+        video.preload = 'auto';
+        video.muted = true;
+        video.playsInline = true;
+
+        video.onloadedmetadata = async () => {
+          fps = 30; // assume 30fps or extract if you know
+          const duration = video.duration;
+          const totalFrames = Math.floor(duration * fps);
+          frameCache = [];
+
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          for (let i = 0; i < totalFrames; i++) {
+            await seekAndCaptureFrame(i);
+            updateProgress(`Caching frame ${i + 1}/${totalFrames}`);
+          }
+          updateProgress('All frames cached!');
+          renderFrame(0);
+          resolve();
+        };
+      });
+    };
+
+    const seekAndCaptureFrame = (frameIndex) => {
+      return new Promise((resolve) => {
+        const time = frameIndex / fps;
+        const onSeeked = () => {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          frameCache[frameIndex] = new ImageData(
+            new Uint8ClampedArray(imageData.data),
+            imageData.width,
+            imageData.height
+          );
+          resolve();
+        };
+        video.currentTime = time;
+        video.onseeked = onSeeked;
+      });
+    };
+
+    const renderFrame = (index) => {
+      if (!frameCache[index]) return;
+      const frame = frameCache[index];
+      const src = cv.matFromImageData(frame);
+      const gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.cvtColor(gray, src, cv.COLOR_GRAY2RGBA);
+      ctx.putImageData(new ImageData(new Uint8ClampedArray(src.data), frame.width, frame.height), 0, 0);
+      src.delete();
+      gray.delete();
+      frameInput.value = index;
+    };
+
+    const updateProgress = (msg) => {
+      console.log(msg);
+    };
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      waitForOpenCV(async () => {
+        updateProgress('Loading and extracting frames...');
+        await extractFrames(file);
+      });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentFrame = Math.min(currentFrame + 1, frameCache.length - 1);
+      renderFrame(currentFrame);
+    });
+
+    prevBtn.addEventListener('click', () => {
+      currentFrame = Math.max(currentFrame - 1, 0);
+      renderFrame(currentFrame);
+    });
+
+    frameInput.addEventListener('change', () => {
+      const val = parseInt(frameInput.value);
+      if (!isNaN(val) && frameCache[val]) {
+        currentFrame = val;
+        renderFrame(currentFrame);
+      }
+    });
+  </script>
+</body>
+</html>
