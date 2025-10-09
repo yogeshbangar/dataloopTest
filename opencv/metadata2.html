@@ -1,36 +1,67 @@
 <!DOCTYPE html>
 <html lang="">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>FFMPEGJS Core Page</title>
+<head>
+  <meta charset="UTF-8" />
+  <title>FFmpeg.js Metadata Extractor</title>
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.6.1/dist/ffmpeg.min.js"></script>
+</head>
+<body>
+  <h1>FFmpeg.js Video Metadata</h1>
+  <pre id="output">Loading...</pre>
 
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.6.1/dist/ffmpeg.min.js"></script>
-    <script>
-      const { createWorker } = FFmpeg;
+  
+<script>
+  const { createWorker } = FFmpeg;
 
-      (async () => {
-        const worker = createWorker({
-          logger: m => console.log(m)
-        });
+  (async () => {
+    const logs = [];
 
-        await worker.load();
-        console.log('loaded')
-        await worker.write('sample.mp4', 'http://127.0.0.1:8080/video.mp4');
-        console.log('write complete')
+    const worker = createWorker({
+      logger: m => {
+        logs.push(m.message);
+        console.log(m.message);
+      }
+    });
 
-        await worker.run("-i sample.mp4 -c:v libx264 -preset slow -crf 25 -vf scale=720:-2 -x264-params keyint=25:keyint_min=25 -an -f mp4 output.mp4");
-        console.log('finished')
+    await worker.load();
+    console.log('✅ FFmpeg loaded');
 
-        const { data } = await worker.read('output.mp4');
-        const decoded = new TextDecoder().decode(data);
-        console.log(data)
-        console.log(decoded)
-      })();
-    </script>
-  </head>
-  <body>
-    <h1>Hello World</h1>
-  </body>
+    const response = await fetch('http://127.0.0.1:8080/video.mp4');
+    const buffer = await response.arrayBuffer();
+    await worker.write('input.mp4', new Uint8Array(buffer));
+    console.log('📥 Video written to FS');
+
+    // Dummy decode to print metadata
+    await worker.run('-i input.mp4 -map 0:v:0 -f null -');
+    console.log('🔍 Video processed for metadata');
+
+    // Extract info from logs
+    const metadata = {};
+
+    const duration = logs.find(l => l.includes('Duration:'));
+    const stream = logs.find(l => l.includes('Stream #0:0'));
+    const fpsMatch = stream?.match(/(\d+(?:\.\d+)?) fps/);
+    const resMatch = stream?.match(/, (\d+)x(\d+)[, ]/);
+
+    if (duration) {
+      metadata.duration = duration.match(/Duration: ([^,]+)/)?.[1];
+    }
+    if (fpsMatch) {
+      metadata.fps = fpsMatch[1];
+    }
+    if (resMatch) {
+      metadata.width = resMatch[1];
+      metadata.height = resMatch[2];
+    }
+    const output = document.getElementById('output');
+    output.textContent = JSON.stringify(metadata, null, 2);
+    console.log('🧾 Extracted Metadata:', metadata);
+    console.log('🧾 Extracted logs:', logs);
+    console.log('🧾 worker log:', worker.logs);
+    console.log('🧾 Extracted fpsMatch:', fpsMatch);
+    console.log('🧾 Extracted resMatch:', resMatch);
+    await worker.terminate();
+  })();
+</script>
+</body>
 </html>
