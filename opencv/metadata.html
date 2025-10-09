@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Video Metadata Extractor</title>
+  </head>
+  <body>
+    <h2>Extract Metadata from Video URL</h2>
+    <input
+      type="text"
+      id="videoUrl"
+      size="80"
+      placeholder="Enter video URL (must support CORS)"
+      value="http://127.0.0.1:8080/video.mp4"
+    />
+    <button onclick="extractMetadata()">Extract Metadata</button>
+    <pre id="output">Waiting for input...</pre>
+
+    <!-- ✅ Use official UMD browser build hosted on jsDelivr -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.5/dist/umd/ffmpeg.min.js" crossorigin="anonymous"></script>
+
+    <script>
+      async function ensureFFmpegLoaded() {
+        if (window.FFmpeg) return window.FFmpeg;
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src =
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.5/dist/umd/ffmpeg.min.js";
+          script.crossOrigin = "anonymous";
+          script.onload = resolve;
+          script.onerror = () =>
+            reject(new Error("Failed to load FFmpeg script"));
+          document.head.appendChild(script);
+        });
+        if (window.FFmpeg) return window.FFmpeg;
+        throw new Error("FFmpeg is not available after loading script");
+      }
+
+      async function extractMetadata() {
+        const url = document.getElementById("videoUrl").value;
+        const output = document.getElementById("output");
+        output.textContent = "Loading FFmpeg...";
+
+        const FFmpegGlobal = await ensureFFmpegLoaded();
+        const { createFFmpeg } = FFmpegGlobal;
+        const ffmpeg = createFFmpeg({
+          log: true,
+          corePath:
+            "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.5/dist/umd/ffmpeg-core.js",
+        });
+
+        try {
+          await ffmpeg.load();
+
+          output.textContent = "Downloading video...";
+          const res = await fetch(url);
+          const buffer = await res.arrayBuffer();
+          ffmpeg.FS("writeFile", "input.mp4", new Uint8Array(buffer));
+
+          output.textContent = "Running FFmpeg...";
+          await ffmpeg.run("-i", "input.mp4", "-f", "ffmetadata", "meta.txt");
+
+          const meta = ffmpeg.FS("readFile", "meta.txt");
+          const decoded = new TextDecoder().decode(meta);
+
+          output.textContent = decoded || "No metadata found.";
+        } catch (err) {
+          console.error(err);
+          output.textContent = "Error: " + err.message;
+        }
+      }
+    </script>
+  </body>
+</html>
