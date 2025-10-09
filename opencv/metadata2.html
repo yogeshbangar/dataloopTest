@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FFMPEGJS Core Page</title>
+
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.6.1/dist/ffmpeg.min.js"></script>
+    <script>
+      const { createWorker } = FFmpeg;
+
+      (async () => {
+        const worker = createWorker({
+          logger: m => console.log(m)
+        });
+
+        await worker.load();
+        console.log('loaded')
+        await worker.write('sample.mp4', 'http://127.0.0.1:8080/video.mp4');
+        console.log('write complete')
+
+        await worker.run("-i sample.mp4 -c:v libx264 -preset slow -crf 25 -vf scale=720:-2 -x264-params keyint=25:keyint_min=25 -an -f mp4 output.mp4");
+        console.log('finished')
+
+        const { data } = await worker.read('output.mp4');
+        const decoded = new TextDecoder().decode(data);
+        console.log(data)
+        console.log(decoded)
+      })();
+    </script>
+  </head>
+  <body>
+    <h1>Hello World</h1>
+  </body>
+</html>
