@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="./ffmpeg.min.js"></script>
+    <title>Worker importScripts Basic Example</title>
+  </head>
+  <body>
+    <h2>Web Worker importScripts Demo</h2>
+    <button id="btn">Send Message to Worker</button>
+
+    <pre id="output"></pre>
+
+    <script>
+      let worker;
+      const output = document.getElementById("output");
+
+      function print(msg) {
+        output.textContent += msg + "\n";
+      }
+      async function toBlobURL(url, mimeType) {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+      }
+
+      async function loadFFmpeg() {
+        const ffmpeg = new FFmpegWASM.FFmpeg();
+        console.log("ffmpeg", ffmpeg);
+
+        const classWorkerURL1 = await toBlobURL(
+          `./workers/814.ffmpeg.js`,
+          "text/javascript"
+        );
+        const coreURL = await toBlobURL(
+          `./workers/ffmpeg-core.js`,
+          "text/javascript"
+        );
+        const wasmURL = await toBlobURL(
+          `./workers/ffmpeg-core.wasm`,
+          "application/wasm"
+        );
+        const workerURL = await toBlobURL(
+          `./workers/ffmpeg-core.worker.js`,
+          "text/javascript"
+        );
+
+        await ffmpeg.load({
+          classWorkerURL: classWorkerURL1,
+          coreURL: coreURL,
+          wasmURL: wasmURL,
+          workerURL: workerURL,
+        });
+      }
+      window.onload = () => {
+        // Create worker
+        worker = new Worker("./workers/814.ffmpeg.js");
+        worker.onmessage = function (e) {
+          print("Worker says: " + JSON.stringify(e.data));
+        };
+        // loadFFmpeg();
+      };
+      // Handle messages from worker
+
+      // Send message to worker on button click
+      document.getElementById("btn").onclick = () => {
+        worker.postMessage("Hello Worker!");
+      };
+    </script>
+  </body>
+</html>

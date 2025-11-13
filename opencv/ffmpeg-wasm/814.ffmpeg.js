@@ -71,7 +71,8 @@
                   try {
                     console.log("importScripts~~~~~~~~1", o);
                     o || (o = e), importScripts(o);
-                  } catch {
+                  } catch(error) {
+                    console.log("importScripts~~~~~~~~error", error);
                     console.log("importScripts~~~~~~~~", o);
                     if (
                       ((o && o !== e) || (o = e.replace("/umd/", "/esm/")),

@@ -1,6 +1,6 @@
 const logEl = document.getElementById("log");
 const log = (msg) => (logEl.textContent += msg + "\n");
-const baseURL = "./workers";
+const baseURL = "http://127.0.0.1:8080/workers";
 document.getElementById("loadBtn").onclick = async () => {
   log("Creating FFmpeg instance...");
 
@@ -12,6 +12,12 @@ document.getElementById("loadBtn").onclick = async () => {
     `${baseURL}/814.ffmpeg.js`,
     window.location.href
   ).toString();
+
+
+  const classWorkerURL1 = await toBlobURL(
+    `${baseURL}/814.ffmpeg.js`,
+    "text/javascript"
+  );
   const coreURL = await toBlobURL(
     `${baseURL}/ffmpeg-core.js`,
     "text/javascript"
@@ -24,11 +30,18 @@ document.getElementById("loadBtn").onclick = async () => {
     `${baseURL}/ffmpeg-core.worker.js`,
     "text/javascript"
   );
-  console.log("classWorkerURL", classWorkerURL);
+  console.log("classWorkerURL", classWorkerURL1);
   console.log("coreURL", coreURL);
   console.log("wasmURL", wasmURL);
   console.log("workerURL", workerURL);
-  await ffmpeg.load({ classWorkerURL, coreURL, wasmURL, workerURL });
+
+  await ffmpeg.load({
+    coreURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.js`,
+    wasmURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.wasm`,
+    workerURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.worker.js`,
+  });
+
+  // await ffmpeg.load({ classWorkerURL:classWorkerURL1, wasmURL,coreURL, workerURL });
 
   log("✔ FFmpeg fully loaded!");
 

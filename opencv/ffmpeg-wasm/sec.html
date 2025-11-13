@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="./ffmpeg.min.js"></script>
+    <title>Worker importScripts Basic Example</title>
+    <script src="/assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
+  </head>
+  <body>
+    <h2>Web Worker importScripts Demo</h2>
+    <button id="btn">Send Message to Worker</button>
+
+    <script>
+      window.onload = async () => {
+        const ffmpeg = new FFmpegWASM.FFmpeg();
+        console.log("ffmpeg", ffmpeg);
+        if (ffmpeg !== null) {
+          ffmpeg.on("log", ({ message }) => {
+            console.log(message);
+          });
+          ffmpeg.on("progress", ({ progress }) => {
+            message.innerHTML = `${progress * 100} %`;
+          });
+          await ffmpeg.load({
+            coreURL: "/assets/core/package/dist/umd/ffmpeg-core.js",
+          });
+          console.log("ffmpeg loaded");
+        }
+      };
+    </script>
+  </body>
+</html>
