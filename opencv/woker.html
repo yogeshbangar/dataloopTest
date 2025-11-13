@@ -10,6 +10,7 @@
     <pre id="log"></pre>
 
     <script type="module">
+      const logEl = document.getElementById("log");
       async function loadFFmpegFromBlob() {
         const umdUrl = "./ffmpeg.min.js";
         const res = await fetch(umdUrl);
