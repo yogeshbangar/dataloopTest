@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>FFmpeg Load Example</title>
+  </head>
+  <body>
+    <h2>FFmpeg Load Test</h2>
+    <button id="loadBtn">Load FFmpeg</button>
+    <pre id="log"></pre>
+
+    <script type="module">
+      async function loadFFmpegFromBlob() {
+        const umdUrl = "https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/ffmpeg.min.js";
+
+        const res = await fetch(umdUrl);
+        const txt = await res.text();
+        const blob = new Blob([txt], { type: "application/javascript" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        await new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = blobUrl;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+
+        URL.revokeObjectURL(blobUrl);
+
+        const ffmpeg = new FFmpegWASM.FFmpeg();
+
+        // const ffmpeg = createFFmpeg({ log: true });
+        return ffmpeg;
+      }
+      async function toBlobURL(url, mimeType) {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Failed to load ${url}: ${res.status}`);
+        }
+        const blob = await res.blob();
+        return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+      }
+
+      const logEl = document.getElementById("log");
+
+      function log(msg) {
+        logEl.textContent += msg + "\n";
+      }
+
+      document.getElementById("loadBtn").onclick = async () => {
+        log("⏳ Loading FFmpeg…");
+        const ffmpeg = await loadFFmpegFromBlob();
+        console.log("ffmpeg", ffmpeg);
+        const baseURL =
+          "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm";
+
+        await ffmpeg.load({
+          coreURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.js`,
+            "text/javascript"
+          ),
+          wasmURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.wasm`,
+            "application/wasm"
+          ),
+          workerURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.worker.js`,
+            "text/javascript"
+          ),
+        });
+
+        log("✅ FFmpeg Loaded!");
+      };
+    </script>
+  </body>
+</html>

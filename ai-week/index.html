@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Figma Export – Create New Task</title>
+  <style>
+    :root {
+      --bg: #30363d;
+      --text: rgba(255,255,255,0.8);
+      --muted: rgba(255,255,255,0.6);
+      --border: rgba(255,255,255,0.15);
+      --fill: rgba(255,255,255,0.05);
+      --secondary: #7c8cff;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+    }
+    .page {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .frame {
+      width: 1440px;
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .frame > header,
+    .frame > footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .frame > footer { border-top: 1px solid var(--border); border-bottom: 0; }
+    .title { font-size: 20px; }
+    .icon-close {
+      inline-size: 16px;
+      block-size: 16px;
+      position: relative;
+      opacity: .8;
+    }
+    .icon-close::before,
+    .icon-close::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: 7px;
+      inset-block-start: 2px;
+      inline-size: 2px;
+      block-size: 12px;
+      background: var(--text);
+      border-radius: 1px;
+      transform-origin: center;
+    }
+    .icon-close::before { transform: rotate(45deg); }
+    .icon-close::after { transform: rotate(-45deg); }
+
+    .body {
+      display: flex;
+      inline-size: 100%;
+      block-size: 728px;
+      border-bottom: 1px solid var(--border);
+    }
+    aside.side {
+      inline-size: 320px;
+      border-inline-end: 1px solid var(--border);
+      background: var(--fill);
+      padding-block: 12px;
+    }
+    .steps { list-style: none; margin: 0; padding: 0; }
+    .item { padding: 12px 20px; border-block-start: 1px solid transparent; }
+    .item + .item { border-block-start-color: transparent; }
+    .item-title { font-size: 14px; line-height: 20px; }
+    .item-sub { color: rgba(255,255,255,0.4); font-size: 12px; line-height: 16px; margin-top: 2px; }
+    .item.active .item-title,
+    .item.active .item-sub { color: var(--secondary); }
+
+    main.content {
+      flex: 1;
+      padding-inline: 20px;
+      padding-inline-start: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .section { margin-top: 20px; }
+    .h3 { font-size: 14px; line-height: 20px; }
+    .muted { color: var(--muted); font-size: 12px; line-height: 16px; margin-top: 4px; }
+    .field { margin-top: 8px; }
+    .select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      inline-size: 100%;
+      max-inline-size: 556px;
+      block-size: 34px;
+      padding: 6px 10px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: rgba(255,255,255,0.4);
+    }
+
+    .btns { display: flex; gap: 16px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      min-block-size: 34px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+    }
+    .btn-outline { border-color: rgba(255,255,255,0.4); }
+    .btn-secondary { border-color: var(--secondary); color: var(--secondary); }
+    .btn-disabled { color: rgba(255,255,255,0.25); border-color: var(--border); }
+  </style>
+  <!-- This file was generated from the selected Figma node using Figma MCP. -->
+  <!-- Pure HTML + CSS version (no JavaScript). -->
+  </head>
+<body>
+  <div class="page">
+    <div class="frame" role="region" aria-label="Create New Task">
+      <header>
+        <div class="title">Create new task</div>
+        <div class="icon-close" aria-hidden="true"></div>
+      </header>
+      <div class="body">
+        <aside class="side" aria-label="Steps">
+          <ul class="steps">
+            <li class="item">
+              <div class="item-title">1. General</div>
+              <div class="item-sub">lorem ipsum, labeling</div>
+            </li>
+            <li class="item">
+              <div class="item-title">2. Data Scope</div>
+              <div class="item-sub">dataset: lorem ipsum (100 items)</div>
+            </li>
+            <li class="item active">
+              <div class="item-title">3. Recipe and Instructions</div>
+              <div class="item-sub">Recipe: lorem ip... (50 labels. 4 attributes)</div>
+            </li>
+            <li class="item">
+              <div class="item-title">4. Statuses</div>
+              <div class="item-sub">Complete, Discard</div>
+            </li>
+            <li class="item">
+              <div class="item-title">5. Assignments</div>
+              <div class="item-sub">Allocation method: distribution</div>
+            </li>
+            <li class="item">
+              <div class="item-title">6. Quality</div>
+              <div class="item-sub">Consensus</div>
+            </li>
+          </ul>
+        </aside>
+        <main class="content">
+          <section class="section">
+            <div class="h3">Which recipe best fits your task?</div>
+            <p class="muted">Recipe is a collection of work instructions over data. It defines the labels, labeling tools and validation rules.</p>
+          </section>
+          <section class="section">
+            <label class="h3" for="recipe">Select a recipe</label>
+            <div class="field">
+              <select id="recipe" class="select">
+                <option selected disabled>Select a recipe</option>
+                <option>Fruit</option>
+                <option>Vegetable</option>
+                <option>Oat</option>
+              </select>
+            </div>
+          </section>
+        </main>
+      </div>
+      <footer>
+        <div class="btns">
+          <span class="btn btn-outline">back: data source</span>
+          <span class="btn btn-secondary">next: statuses</span>
+        </div>
+        <div class="btn btn-disabled" aria-disabled="true">Create task</div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
+
+
