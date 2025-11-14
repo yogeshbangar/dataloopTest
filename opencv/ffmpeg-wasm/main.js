@@ -36,9 +36,21 @@ document.getElementById("loadBtn").onclick = async () => {
   console.log("workerURL", workerURL);
 
   await ffmpeg.load({
-    coreURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.js`,
-    wasmURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.wasm`,
-    workerURL: `https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm/ffmpeg-core.worker.js`,
+    // Use multi-threaded core only when SharedArrayBuffer is available (cross-origin isolated).
+    // Fallback to single-threaded core otherwise to avoid "SharedArrayBuffer is not defined".
+    // See: https://developer.chrome.com/docs/web-platform/shared-array-buffer
+    ...(function () {
+      const supportsSAB =
+        typeof SharedArrayBuffer === "function" && crossOriginIsolated === true;
+      const base = supportsSAB
+        ? "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm"
+        : "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
+      return {
+        coreURL: `${base}/ffmpeg-core.js`,
+        wasmURL: `${base}/ffmpeg-core.wasm`,
+        workerURL: `${base}/ffmpeg-core.worker.js`,
+      };
+    })(),
   });
 
   // await ffmpeg.load({ classWorkerURL:classWorkerURL1, wasmURL,coreURL, workerURL });

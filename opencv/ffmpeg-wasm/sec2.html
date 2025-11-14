@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>FFmpeg.js Metadata Extractor</title>
+    <script src="umd/ffmpeg.js"></script>
+  </head>
+  <body style="background-color: #000; color: #fff">
+    <div class="container">
+      <button id="loadBtn">Load FFmpeg</button>
+      <button id="execBtn">Metadata</button>
+    </div>
+
+    <script>
+      let ffmpeg;
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm'
+      const ff814URL = 'http://127.0.0.1:8080/umd/814.ffmpeg.js'
+      async function toBlobURL(url, mimeType) {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        return URL.createObjectURL(blob);
+      }
+
+      async function toBlobURL1(url, mimeType) {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+      }
+
+      window.onload = async () => {
+        console.log("window loaded");
+
+        const { FFmpeg } = FFmpegWASM;
+        ffmpeg = new FFmpeg();
+        const classWorkerURL = await toBlobURL1(`${ff814URL}`, "text/javascript");
+        const coreURL = await toBlobURL1(`${baseURL}/ffmpeg-core.js`, "text/javascript");
+        const wasmURL = await toBlobURL1(`${baseURL}/ffmpeg-core.wasm`, "application/wasm");
+        const workerURL = await toBlobURL1(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript");
+        console.log("classWorkerURL", classWorkerURL);
+        console.log("coreURL", coreURL);
+        console.log("wasmURL", wasmURL);
+        console.log("workerURL", workerURL);
+
+        await ffmpeg.load({
+          classWorkerURL: classWorkerURL,
+          coreURL: coreURL,
+          wasmURL: wasmURL,
+          workerURL: workerURL,
+        });
+        console.log("ffmpeg loaded");
+      };
+      const execBtn = document.getElementById("execBtn");
+      if (execBtn) {
+        execBtn.onclick = async () => {
+          const res = await fetch("./video2.mp4");
+          const data = new Uint8Array(await res.arrayBuffer());
+          console.log("Video loaded", ffmpeg, data.length);
+          await ffmpeg.writeFile("test.mp4", data);
+
+          await ffmpeg.ffprobe([
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration:stream=nb_frames",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            "test.avi",
+            "-o",
+            "output.txt",
+          ]);
+          console.log("~~~~~~output.txt written");
+          const outputData = await ffmpeg.readFile("output.txt");
+          const decoder = new TextDecoder();
+          const jsonStr = decoder.decode(outputData);
+          console.log(jsonStr);
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -4,29 +4,104 @@
     <meta charset="UTF-8" />
     <script src="./ffmpeg.min.js"></script>
     <title>Worker importScripts Basic Example</title>
-    <script src="/assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
+    <script src="./assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
   </head>
-  <body>
-    <h2>Web Worker importScripts Demo</h2>
-    <button id="btn">Send Message to Worker</button>
-
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-wrap: nowrap;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    button {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background-color: #df00ee;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 900;
+    }
+  </style>
+  <body style="background-color: #000; color: #fff">
+    <div class="container">
+      <button id="loadBtn">Load FFmpeg</button>
+      <button id="execBtn">Metada</button>
+    </div>
     <script>
+      const ffmpegWorkerURL = 'https://cdnjs.cloudflare.com/ajax/libs/ffmpeg/0.12.15/umd/814.ffmpeg.js'
+      const baseURL =
+        "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm";
+      const baseURLA = `/assets/core/package/dist/umd`;
+      let videoBuffer;
       window.onload = async () => {
-        const ffmpeg = new FFmpegWASM.FFmpeg();
-        console.log("ffmpeg", ffmpeg);
-        if (ffmpeg !== null) {
-          ffmpeg.on("log", ({ message }) => {
-            console.log(message);
-          });
-          ffmpeg.on("progress", ({ progress }) => {
-            message.innerHTML = `${progress * 100} %`;
-          });
-          await ffmpeg.load({
-            coreURL: "/assets/core/package/dist/umd/ffmpeg-core.js",
-          });
-          console.log("ffmpeg loaded");
-        }
+        console.log("window loaded");
       };
+      async function toBlobURL(url, mimeType) {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        return URL.createObjectURL(blob);
+      }
+      const loadBtn = document.getElementById("loadBtn");
+      if (loadBtn) {
+        loadBtn.onclick = async () => {
+          const ffmpeg = new FFmpegWASM.FFmpeg();
+          console.log("ffmpeg", ffmpeg);
+          if (ffmpeg !== null) {
+            ffmpeg.on("log", ({ message }) => {
+              console.log(message);
+            });
+            ffmpeg.on("progress", ({ progress }) => {
+              message.innerHTML = `${progress * 100} %`;
+            });
+            // await ffmpeg.load({
+            //   classWorkerURL: await toBlobURL(`${baseURL}/814.ffmpeg.js`, "text/javascript"),
+            //   coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
+            //   wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+            //   workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, "text/javascript"),
+            // });
+            await ffmpeg.load({
+              coreURL: await toBlobURL(`${baseURLA}/ffmpeg-core.js`, "text/javascript"),
+              wasmURL: await toBlobURL(`${baseURLA}/ffmpeg-core.wasm`, "application/wasm"),
+              workerURL: await toBlobURL(`${baseURLA}/ffmpeg-core.worker.js`, "text/javascript"),
+            });
+            console.log("ffmpeg loaded");
+            videoBuffer = await fetch("./video2.mp4");
+            loadBtn.innerHTML = "FFmpeg Loaded";
+            console.log(ffmpeg.loaded, "video~~~~~~ loaded", videoBuffer);
+          }
+        };
+      }
+      const execBtn = document.getElementById("execBtn");
+      if (execBtn) {
+        execBtn.onclick = async () => {
+          console.log("Running: ffmpeg -version");
+          try {
+            await ffmpeg.writeFile("test.avi", videoBuffer);
+            await ffmpeg.ffprobe([
+              "-v",
+              "error",
+              "-show_entries",
+              "format=duration:stream=nb_frames",
+              "-of",
+              "default=noprint_wrappers=1:nokey=1",
+              "test.avi",
+              "-o",
+              "output.txt",
+            ]);
+            const outputData = await ffmpeg.readFile("output.txt", "utf-8");
+            const decoder = new TextDecoder();
+            const jsonStr = decoder.decode(outputData);
+            console.log("jsonStr", jsonStr);
+          } catch (err) {
+            log(`exec error: ${err}`);
+          }
+        };
+      }
     </script>
   </body>
 </html>

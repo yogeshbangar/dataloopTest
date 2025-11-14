@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FFmpeg WASM Metadata Extractor</title>
+
+  <!-- Required for SharedArrayBuffer -->
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.min.js"></script>
+
+  <style>
+    body { background: #111; color: #eee; font-family: sans-serif; padding: 1rem; }
+    .log { margin: 0.5rem 0; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>🎥 FFmpeg Metadata Extractor</h1>
+
+  <button id="loadBtn">Load FFmpeg</button>
+  <input type="file" id="fileInput" accept="video/*,audio/*" disabled />
+  <button id="execBtn" disabled>Extract Metadata</button>
+
+  <pre id="output">Status: Ready</pre>
+
+  <script>
+    const { FFmpeg } = FFmpegWASM;
+    const ffmpeg = new FFmpeg();
+
+    const log = (msg, isErr = false) => {
+      const out = document.getElementById("output");
+      out.textContent += `\n${isErr ? "[Error] " : ""}${msg}`;
+    };
+
+    document.getElementById("loadBtn").onclick = async () => {
+      try {
+        log("Loading FFmpeg...");
+        const base = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+
+        const toBlobURL = async (url, mime) => {
+          const res = await fetch(url);
+          const buf = await res.arrayBuffer();
+          return URL.createObjectURL(new Blob([buf], { type: mime }));
+        };
+
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, 'application/wasm'),
+          workerURL: await toBlobURL(`${base}/ffmpeg-core.worker.js`, 'text/javascript')
+        });
+
+        log("✅ FFmpeg loaded");
+        document.getElementById("fileInput").disabled = false;
+      } catch (err) {
+        log("Failed to load FFmpeg: " + err.message, true);
+      }
+    };
+
+    document.getElementById("fileInput").onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      window.selectedFile = file;
+      document.getElementById("execBtn").disabled = false;
+      log(`Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    };
+
+    document.getElementById("execBtn").onclick = async () => {
+      if (!window.selectedFile) return;
+
+      try {
+        const file = window.selectedFile;
+        const ext = file.name.split('.').pop();
+        const fileName = `input.${ext}`;
+
+        const buffer = await file.arrayBuffer();
+        await ffmpeg.writeFile(fileName, new Uint8Array(buffer));
+        log("📥 File written to FS");
+
+        await ffmpeg.exec(['-i', fileName, '-f', 'ffmetadata', 'metadata.txt']);
+        const metadataBuf = await ffmpeg.readFile('metadata.txt');
+        const metadataText = new TextDecoder().decode(metadataBuf);
+
+        log("📋 Metadata:\n" + metadataText);
+      } catch (err) {
+        log("Failed to extract metadata: " + err.message, true);
+      }
+    };
+  </script>
+</body>
+</html>
