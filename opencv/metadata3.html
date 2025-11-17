@@ -135,14 +135,9 @@
         }
         const output = document.getElementById("output");
         output.textContent = JSON.stringify(metadata, null, 2);
-        // console.log("🧾 Extracted Metadata:", metadata);
-        // console.log("🧾 Extracted logs:", logs);
-        // console.log("🧾 worker log:", worker.logs);
-        // console.log("🧾 Extracted fpsMatch:", fpsMatch);
-        // console.log("🧾 Extracted resMatch:", resMatch);
         const parsedLogs = parseFFmpegLogs(logs);
-        console.log("🧾 Parsed Logs:", parsedLogs);
-        // await worker.terminate();
+        console.log("🧾 Parsed Logs:", logs);
+        
       })();
     </script>
   </body>

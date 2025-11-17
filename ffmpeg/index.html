@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FFmpeg.js Metadata Extractor</title>
+    <script src="./FFmpegWorker.js"></script>
+  </head>
+  <body>
+    <h1>FFmpeg.js Video Metadata</h1>
+    <div id="output">Loading...</div>
+    <button id="loadScript" onclick="clickLoadScript()">Load Script</button>
+    
+
+    <script>
+      let ffmpegWorker;
+      window.onload = () => {
+        ffmpegWorker = new FFmpegWorker();
+        ffmpegWorker.loadScriptAsBlob("./0.6.1/ffmpeg.min.js");
+        
+      };
+      function clickLoadScript() {
+        console.log("Load Script");
+        ffmpegWorker.init();
+      }
+    </script>
+  </body>
+</html>
