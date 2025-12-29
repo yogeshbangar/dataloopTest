@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Modalities Test</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --input-bg: #333;
+            --input-border: #444;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --success-color: #4caf50;
+            --success-bg: rgba(76, 175, 80, 0.1);
+            --error-color: #ef5350;
+            --error-bg: rgba(239, 83, 80, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            outline: none;
+        }
+        input:focus {
+            border-color: var(--primary-color);
+        }
+        button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        #result {
+            background-color: var(--container-bg);
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--input-border);
+            min-height: 100px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 14px;
+        }
+        .error {
+            color: var(--error-color);
+            background-color: var(--error-bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid var(--error-color);
+        }
+        .success {
+            color: var(--success-color);
+            background-color: var(--success-bg);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border: 1px solid var(--success-color);
+            font-weight: bold;
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fetch JSON & Find Modalities</h1>
+    
+    <div class="container">
+        <input type="text" id="urlInput" placeholder="Enter API URL (e.g., https://api.dataloop.ai/...)" />
+        <button onclick="fetchAndFind()">Fetch Data</button>
+    </div>
+
+    <div id="status"></div>
+    <pre id="result">Results will appear here...</pre>
+
+    <script>
+        async function fetchAndFind() {
+            const urlInput = document.getElementById('urlInput');
+            const resultPre = document.getElementById('result');
+            const statusDiv = document.getElementById('status');
+            
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                statusDiv.innerHTML = '<div class="error">Please enter a URL</div>';
+                return;
+            }
+
+            statusDiv.innerHTML = '<div>Loading...</div>';
+            resultPre.textContent = '';
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Function to recursively find 'modalities' key
+                function findModalities(obj) {
+                    if (!obj || typeof obj !== 'object') return undefined;
+                    
+                    // Check if current object has modalities
+                    if ('modalities' in obj) {
+                        return obj.modalities;
+                    }
+
+                    // Check arrays
+                    if (Array.isArray(obj)) {
+                        for (const item of obj) {
+                            const result = findModalities(item);
+                            if (result !== undefined) return result;
+                        }
+                        return undefined;
+                    }
+
+                    // Check object properties
+                    for (const key in obj) {
+                        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                            const result = findModalities(obj[key]);
+                            if (result !== undefined) return result;
+                        }
+                    }
+
+                    return undefined;
+                }
+
+                const modalities = findModalities(data);
+
+                if (modalities !== undefined) {
+                    statusDiv.innerHTML = '<div class="success">Successfully found "modalities" key!</div>';
+                    resultPre.textContent = JSON.stringify(modalities, null, 2);
+                    console.log('Found modalities:', modalities);
+                } else {
+                    statusDiv.innerHTML = '<div class="error">Key "modalities" not found in the response.</div>';
+                    resultPre.textContent = 'Full Response structure:\n' + JSON.stringify(data, null, 2);
+                }
+
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Fetch error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
